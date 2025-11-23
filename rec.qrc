@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/sonidos">
+        <file>nivel1_background.mp3</file>
+        <file>disparo_avion.mp3</file>
+        <file>explosion.mp3</file>
+        <file>winning.mp3</file>
+        <file>game_over.mp3</file>
+        <file>tank_driving.mp3</file>
+        <file>tank_engine.mp3</file>
+        <file>tank_fire.mp3</file>
+        <file>tank_turret.mp3</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>avion_jugador.png</file>
+        <file>bg.png</file>
+        <file>enemigo.png</file>
+        <file>proyectil.png</file>
+        <file>explosion1.png</file>
+        <file>explosion3.png</file>
+        <file>explosion2.png</file>
+        <file>explosion4.png</file>
+        <file>sherman_chasis.png</file>
+        <file>sherman_torreta.png</file>
+        <file>tiger_chasis.png</file>
+        <file>tiger_torreta.png</file>
+        <file>proyectil_tanque.png</file>
+    </qresource>
+</RCC>
