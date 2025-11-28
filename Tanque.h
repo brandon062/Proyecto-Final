@@ -16,6 +16,9 @@ public:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
 
+    void recibirImpacto();
+    int getVidas() const { return vidas; }
+
 public slots:
     void actualizarFisica();
     void disparar();
@@ -48,24 +51,29 @@ private:
     bool girarTorretaDer;
 
     // Sonidos
-    QMediaPlayer *motorLoopPlayer;   // tank_engine.mp3
+    QMediaPlayer *motorLoopPlayer;
     QAudioOutput *motorLoopAudio;
 
-    QMediaPlayer *drivingPlayer;     // tank_driving.mp3
+    QMediaPlayer *drivingPlayer;
     QAudioOutput *drivingAudio;
 
-    QMediaPlayer *turretPlayer;      // tank_turret.mp3
+    QMediaPlayer *turretPlayer;
     QAudioOutput *turretAudio;
 
-    QMediaPlayer *firePlayer;        // tank_fire.mp3
+    QMediaPlayer *firePlayer;
     QAudioOutput *fireAudio;
 
     // Recarga de disparo
     bool puedeDisparar;
     QTimer *reloadTimer;
+
+    // Vidas del jugador
+    int vidas;
+    bool destruido;
 };
 
 #endif // TANQUE_H
+
 
 
 

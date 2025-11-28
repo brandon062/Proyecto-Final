@@ -17,6 +17,7 @@ SOURCES += \
     ProyectilTanque.cpp \
     Score.cpp \
     Tanque.cpp \
+    TanqueEnemigo.cpp \
     Vida.cpp \
     enemigo.cpp \
     explosion.cpp \
@@ -34,6 +35,7 @@ HEADERS += \
     ProyectilTanque.h \
     Score.h \
     Tanque.h \
+    TanqueEnemigo.h \
     Vehiculo.h \
     Vida.h \
     enemigo.h \

@@ -9,6 +9,7 @@
         <file>tank_engine.mp3</file>
         <file>tank_fire.mp3</file>
         <file>tank_turret.mp3</file>
+        <file>tank_enemyfire.mp3</file>
     </qresource>
     <qresource prefix="/images">
         <file>avion_jugador.png</file>

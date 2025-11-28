@@ -6,7 +6,7 @@
 #include <QtMath>
 #include <QUrl>
 #include <QGraphicsScene>
-
+#include "explosion.h"
 Tanque::Tanque(QGraphicsItem *parent)
     : QObject()
     , QGraphicsPixmapItem(parent)
@@ -15,9 +15,9 @@ Tanque::Tanque(QGraphicsItem *parent)
     // movimiento LENTO
     , aceleracion(0.15)
     , friccion(0.92)
-    , velocidadMaxima(1.0)
-    , velocidadReversaMax(0.9)
-    , velocidadGiro(0.7)
+    , velocidadMaxima(1.5)
+    , velocidadReversaMax(1.2)
+    , velocidadGiro(0.9)
     , torreta(nullptr)
     , anguloTorretaRel(0.0)
     , girarIzquierda(false)
@@ -36,6 +36,8 @@ Tanque::Tanque(QGraphicsItem *parent)
     , fireAudio(nullptr)
     , puedeDisparar(true)
     , reloadTimer(nullptr)
+    , vidas(3)
+    , destruido(false)
 {
     // ===== Chasis del tanque =====
     QPixmap chasis(":/images/sherman_chasis.png");
@@ -176,6 +178,8 @@ void Tanque::keyReleaseEvent(QKeyEvent *event)
 
 void Tanque::actualizarFisica()
 {
+    if (destruido)
+        return;
     // === Girar chasis ===
     if (girarIzquierda) {
         anguloCuerpo -= velocidadGiro;
@@ -274,7 +278,7 @@ void Tanque::disparar()
     QPointF muzzlePos = centroTorretaScene + dir * barrelLength;
 
     // Crear proyectil
-    ProyectilTanque *bala = new ProyectilTanque(dir);
+    ProyectilTanque *bala = new ProyectilTanque(dir, true);  // true = es del jugador
     bala->setPos(muzzlePos);
     scene()->addItem(bala);
 }
@@ -282,6 +286,35 @@ void Tanque::disparar()
 void Tanque::recargar()
 {
     puedeDisparar = true;
+}
+
+void Tanque::recibirImpacto()
+{
+    if (destruido)
+        return;    // ya está muerto, ignorar impactos extra
+
+    vidas--;
+
+    // Aquí NO creamos la explosión, porque ya la estás creando
+    // en ProyectilTanque::move() cuando detecta la colisión.
+
+    if (vidas <= 0) {
+        destruido = true;
+
+        // parar sonidos
+        if (motorLoopPlayer)  motorLoopPlayer->stop();
+        if (drivingPlayer)    drivingPlayer->stop();
+        if (turretPlayer)     turretPlayer->stop();
+        if (firePlayer)       firePlayer->stop();
+
+        // quitar de la escena para que desaparezca visualmente
+        if (scene()) {
+            scene()->removeItem(this);
+        }
+
+        // OJO: NO hacemos delete this;
+        // así evitamos que TanqueEnemigo y otros timers usen un puntero borrado
+    }
 }
 
 

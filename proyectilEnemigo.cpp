@@ -11,10 +11,10 @@ proyectilEnemigo::proyectilEnemigo(QGraphicsItem *parent)
     : QObject(), QGraphicsPixmapItem(parent)
 {
     // Usamos el mismo sprite que tu proyectil normal para asegurarnos que se ve
-    QPixmap sprite(":/images/proyectil.png");
+    QPixmap sprite(":/images/proyectil_tanque.png");
 
     // Escalar el sprite enemigo (puedes ajustar el tamaño)
-    QPixmap spriteEscalado = sprite.scaled(36, 36,Qt::KeepAspectRatio,Qt::SmoothTransformation);
+    QPixmap spriteEscalado = sprite.scaled(10, 10,Qt::KeepAspectRatio,Qt::SmoothTransformation);
     setPixmap(spriteEscalado);
 
     // Timer para mover la bala

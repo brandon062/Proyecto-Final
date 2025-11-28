@@ -3,20 +3,21 @@
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
-#include <QTimer>
-
-#include "Tanque.h"   // el tanque jugador
+#include "Tanque.h"
+#include "TanqueEnemigo.h"
 
 class NivelBatallaTanque : public QGraphicsView
 {
     Q_OBJECT
 public:
-    NivelBatallaTanque(QWidget *parent = nullptr);
+    explicit NivelBatallaTanque(QWidget *parent = nullptr);
 
 private:
     QGraphicsScene *scene;
     Tanque *tanqueJugador;
+    TanqueEnemigo *tanqueEnemigo;   // <--- NUEVO
 };
 
-#endif
+#endif // NIVELBATALLATANQUE_H
+
 

@@ -5,25 +5,27 @@
 NivelBatallaTanque::NivelBatallaTanque(QWidget *parent)
     : QGraphicsView(parent)
 {
-    // Crear escena
     scene = new QGraphicsScene();
     scene->setSceneRect(0, 0, 800, 600);
     setScene(scene);
 
-    // Fondo de nieve (usa la imagen que quieras)
-    setBackgroundBrush(Qt::darkGreen);
-
+    setBackgroundBrush(QBrush(QImage(":/images/nieve.png"))); // tu fondo
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setFixedSize(800, 600);
 
-    // ====== Agregar tanque jugador ======
+    // ===== Tanque jugador (Sherman) =====
     tanqueJugador = new Tanque();
     tanqueJugador->setFlag(QGraphicsItem::ItemIsFocusable);
     tanqueJugador->setFocus();
-    tanqueJugador->setPos(400, 300);
-
+    tanqueJugador->setPos(400, 400);
     scene->addItem(tanqueJugador);
+
+    // ===== Tanque enemigo (Tiger) =====
+    tanqueEnemigo = new TanqueEnemigo(tanqueJugador);
+    tanqueEnemigo->setPos(200, 100);  // posición inicial, ajusta a gusto
+    scene->addItem(tanqueEnemigo);
 
     show();
 }
+
