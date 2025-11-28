@@ -5,7 +5,7 @@ Mina::Mina(QGraphicsItem *parent)
     : QGraphicsPixmapItem(parent)
 {
     QPixmap sprite(":/images/mina.png");
-    QPixmap esc = sprite.scaled(40, 40,
+    QPixmap esc = sprite.scaled(30, 30,
                                 Qt::KeepAspectRatio,
                                 Qt::SmoothTransformation);
     setPixmap(esc);

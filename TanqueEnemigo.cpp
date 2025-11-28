@@ -141,13 +141,32 @@ void TanqueEnemigo::actualizarIA()
         setPos(x() + dx, y() + dy);
     }
 
-    // === Colisión con estructuras: si toca un edificio, volvemos atrás ===
+    // === Colisión con estructuras y otros tanques ===
     QList<QGraphicsItem*> colisiones = collidingItems();
+    bool choco = false;
     for (QGraphicsItem *item : colisiones) {
         if (dynamic_cast<EstructuraMapa*>(item)) {
-            setPos(posAnterior);   // revertir movimiento
+            choco = true;
             break;
         }
+
+        // Colisión con tanque del jugador
+        if (dynamic_cast<Tanque*>(item)) {
+            choco = true;
+            break;
+        }
+
+        // Colisión con otros tanques enemigos
+        TanqueEnemigo *otroEnemigo = dynamic_cast<TanqueEnemigo*>(item);
+        if (otroEnemigo && otroEnemigo != this) {
+            choco = true;
+            break;
+        }
+    }
+
+    if (choco) {
+        // Si chocó con algo sólido, volvemos a la posición anterior
+        setPos(posAnterior);
     }
 
     // ===== Girar la torreta para apuntar SIEMPRE al jugador =====

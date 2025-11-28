@@ -9,7 +9,8 @@
 #include "explosion.h"
 #include "EstructuraMapa.h"
 #include "Mina.h"
-
+#include "TanqueEnemigo.h"
+#include "CajaReparacion.h"
 
 Tanque::Tanque(QGraphicsItem *parent)
     : QObject()
@@ -42,6 +43,7 @@ Tanque::Tanque(QGraphicsItem *parent)
     , reloadTimer(nullptr)
     , vidas(3)
     , destruido(false)
+    , congelado(false)
 {
     // ===== Chasis del tanque =====
     QPixmap chasis(":/images/sherman_chasis.png");
@@ -95,6 +97,14 @@ Tanque::Tanque(QGraphicsItem *parent)
     firePlayer->setAudioOutput(fireAudio);
     fireAudio->setVolume(0.9);
     firePlayer->setSource(QUrl("qrc:/sonidos/tank_fire.mp3"));
+
+    // ===== sonido de reparación =====
+    repairPlayer = new QMediaPlayer(this);
+    repairAudio  = new QAudioOutput(this);
+    repairPlayer->setAudioOutput(repairAudio);
+    repairAudio->setVolume(0.9);
+    repairPlayer->setSource(QUrl("qrc:/sonidos/reparacion.mp3"));
+
 
     // ===== Timer de recarga (8 segundos) =====
     reloadTimer = new QTimer(this);
@@ -182,7 +192,7 @@ void Tanque::keyReleaseEvent(QKeyEvent *event)
 
 void Tanque::actualizarFisica()
 {
-    if (destruido)
+    if (destruido || congelado)
         return;
 
     // === Girar chasis ===
@@ -231,6 +241,17 @@ void Tanque::actualizarFisica()
         }
     }
 
+    // === Colisión con tanques enemigos ===
+    colisiones = collidingItems();
+    for (QGraphicsItem *item : colisiones) {
+        if (dynamic_cast<TanqueEnemigo*>(item)) {
+            // Si toca un tanque enemigo, revertimos el movimiento
+            setPos(posAnterior);
+            velocidad = 0;
+            break;
+        }
+    }
+
     // === Colisión con minas (solo afecta al jugador) ===
     colisiones = collidingItems();  // recalculamos después de ajustar posición
     for (QGraphicsItem *item : colisiones) {
@@ -267,6 +288,34 @@ void Tanque::actualizarFisica()
         }
     }
 
+    // === Colisión con caja de reparación (solo jugador) ===
+    colisiones = collidingItems();
+    for (QGraphicsItem *item : colisiones) {
+        CajaReparacion *caja = dynamic_cast<CajaReparacion*>(item);
+        if (caja) {
+            // Solo repara si tenemos menos de 3 vidas
+            if (vidas < 3) {
+                vidas++;
+                emit vidasCambiaron(vidas);
+
+                // reproducir sonido de reparación
+                if (repairPlayer->playbackState() == QMediaPlayer::PlayingState) {
+                    repairPlayer->setPosition(0);
+                } else {
+                    repairPlayer->play();
+                }
+
+                // eliminar la caja del mapa
+                if (scene()) {
+                    scene()->removeItem(caja);
+                }
+                delete caja;
+            }
+            // Si ya tiene 3 vidas, no pasa nada y la caja permanece.
+            break;
+        }
+    }
+
     // === Rotación de la torreta ===
     if (girarTorretaIzq) {
         anguloTorretaRel -= 1.0;
@@ -289,16 +338,57 @@ void Tanque::actualizarFisica()
         }
     }
 
-    // Límites de pantalla
+    // === LÍMITES DE PANTALLA ===
     qreal minX = 0;
-    qreal minY = 0;
     qreal maxX = 800 - boundingRect().width();
     qreal maxY = 600 - boundingRect().height();
 
     if (x() < minX) setX(minX);
-    if (y() < minY) setY(minY);
     if (x() > maxX) setX(maxX);
     if (y() > maxY) setY(maxY);
+
+    // Solo permitimos pasar por arriba si NO hay tanques enemigos
+    bool hayEnemigos = false;
+    if (scene()) {
+        const auto itemsEscena = scene()->items();
+        for (QGraphicsItem *it : itemsEscena) {
+            if (dynamic_cast<TanqueEnemigo*>(it)) {
+                hayEnemigos = true;
+                break;
+            }
+        }
+    }
+
+    if (hayEnemigos && y() < 0) {
+        // Si aún hay enemigos, no dejar que salga por arriba
+        setY(0);
+    }
+}
+
+void Tanque::setVidas(int v)
+{
+    //limite entre 0 y 3
+    if (v < 0) v = 0;
+    if (v > 3) v = 3;
+
+    vidas = v;
+
+    // Aquí no emitimos vidasCambiaron ni hacemos lógica de muerte,
+    // eso se maneja con recibirImpacto() y en el nivel.
+}
+
+void Tanque::setCongelado(bool c)
+{
+    congelado = c;
+
+    if (congelado) {
+        // Apagar todos los sonidos del tanque
+        if (motorLoopPlayer)  motorLoopPlayer->stop();
+        if (drivingPlayer)    drivingPlayer->stop();
+        if (turretPlayer)     turretPlayer->stop();
+        if (firePlayer)       firePlayer->stop();
+        if (repairPlayer)     repairPlayer->stop();
+    }
 }
 
 void Tanque::disparar()
@@ -344,29 +434,26 @@ void Tanque::recargar()
 void Tanque::recibirImpacto()
 {
     if (destruido)
-        return;    // ya está muerto, ignorar impactos extra
+        return;
 
     vidas--;
 
-    // Aquí NO creamos la explosión, porque ya la estás creando
-    // en ProyectilTanque::move() cuando detecta la colisión.
+    emit vidasCambiaron(vidas);
 
     if (vidas <= 0) {
         destruido = true;
 
-        // parar sonidos
         if (motorLoopPlayer)  motorLoopPlayer->stop();
         if (drivingPlayer)    drivingPlayer->stop();
         if (turretPlayer)     turretPlayer->stop();
         if (firePlayer)       firePlayer->stop();
 
-        // quitar de la escena para que desaparezca visualmente
+        emit jugadorMurio();
+
         if (scene()) {
             scene()->removeItem(this);
         }
-
-        // no hacemos delete this;
-        // así evitamos que TanqueEnemigo y otros timers usen un puntero borrado
+        // NO hacemos delete this;
     }
 }
 

@@ -10,6 +10,10 @@
         <file>tank_fire.mp3</file>
         <file>tank_turret.mp3</file>
         <file>tank_enemyfire.mp3</file>
+        <file>reparacion.mp3</file>
+        <file>fondo1.mp3</file>
+        <file>fondo2.mp3</file>
+        <file>mision_completa.mp3</file>
     </qresource>
     <qresource prefix="/images">
         <file>avion_jugador.png</file>
@@ -27,8 +31,14 @@
         <file>proyectil_tanque.png</file>
         <file>edificio1.png</file>
         <file>edificio2.png</file>
-        <file>edificio3.png</file>
         <file>mina.png</file>
         <file>bg2.png</file>
+        <file>vida_tanque.png</file>
+        <file>caja_reparacion.png</file>
+        <file>edificio4.png</file>
+        <file>edificio5.png</file>
+        <file>edificio6.png</file>
+        <file>edificio3.png</file>
+        <file>edificio7.png</file>
     </qresource>
 </RCC>

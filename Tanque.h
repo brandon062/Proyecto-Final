@@ -18,6 +18,12 @@ public:
 
     void recibirImpacto();
     int getVidas() const { return vidas; }
+    void setVidas(int v);
+    void setCongelado(bool c);
+
+signals:
+    void vidasCambiaron(int vidasRestantes);
+    void jugadorMurio();
 
 public slots:
     void actualizarFisica();
@@ -63,6 +69,9 @@ private:
     QMediaPlayer *firePlayer;
     QAudioOutput *fireAudio;
 
+    QMediaPlayer *repairPlayer;
+    QAudioOutput *repairAudio;
+
     // Recarga de disparo
     bool puedeDisparar;
     QTimer *reloadTimer;
@@ -70,6 +79,7 @@ private:
     // Vidas del jugador
     int vidas;
     bool destruido;
+    bool congelado;
 };
 
 #endif // TANQUE_H
