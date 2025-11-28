@@ -25,5 +25,10 @@
         <file>tiger_chasis.png</file>
         <file>tiger_torreta.png</file>
         <file>proyectil_tanque.png</file>
+        <file>edificio1.png</file>
+        <file>edificio2.png</file>
+        <file>edificio3.png</file>
+        <file>mina.png</file>
+        <file>bg2.png</file>
     </qresource>
 </RCC>

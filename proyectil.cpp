@@ -7,7 +7,7 @@
 #include "NivelBatallaAerea.h"
 #include "explosion.h"
 
-extern juego *Juego; // there is an external global object called game
+extern juego *Juego;
 
 proyectil::proyectil(QGraphicsItem *parent): EntidadMovil(parent){
     // Cargar el sprite original del proyectil

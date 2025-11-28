@@ -10,7 +10,7 @@ int main(int argc, char *argv[]){
     NivelBatallaTanque *nivel2 = new NivelBatallaTanque();
     nivel2->show();
 
-     //Si quisieras volver a probar el nivel 1:
+     //probar el nivel 1:
     //Juego = new juego();
     //Juego->show();
 

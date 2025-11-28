@@ -45,7 +45,7 @@ void jugador::keyPressEvent(QKeyEvent *evento)
     int alto  = pixmap().height();
 
     // Límite inferior y superior
-    int limiteSuperior = 350;   // <-- Ajusta este valor si quieres
+    int limiteSuperior = 350;
     int limiteInferior = 600 - alto;  // que no se salga de abajo
 
     if (evento->key() == Qt::Key_Left) {

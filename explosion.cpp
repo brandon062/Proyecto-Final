@@ -2,7 +2,7 @@
 #include <QGraphicsScene>
 #include <QPixmap>
 
-#define ESCALA_ANCHO 100   // ajusta el tamaño aquí
+#define ESCALA_ANCHO 100
 #define ESCALA_ALTO  100
 
 Explosion::Explosion(QGraphicsItem *parent)
@@ -15,9 +15,8 @@ Explosion::Explosion(QGraphicsItem *parent)
     explosionAudio = new QAudioOutput(this);
 
     explosionSound->setAudioOutput(explosionAudio);
-    explosionAudio->setVolume(0.8);  // volumen de la explosión
+    explosionAudio->setVolume(0.8);
 
-    // ruta en recursos (.qrc) – ajústala si tu prefix es distinto
     explosionSound->setSource(QUrl("qrc:/sonidos/explosion.mp3"));
 
     // reproducir una vez al crear la explosión

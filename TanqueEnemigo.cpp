@@ -1,28 +1,31 @@
 #include "TanqueEnemigo.h"
 #include "Tanque.h"
 #include "ProyectilTanque.h"
+#include "EstructuraMapa.h"
 
 #include <QGraphicsScene>
 #include <QtMath>
 #include <QUrl>
+#include <QLineF>
 
 TanqueEnemigo::TanqueEnemigo(Tanque *objetivo, QGraphicsItem *parent)
     : QObject()
     , QGraphicsPixmapItem(parent)
     , objetivo(objetivo)
     , anguloCuerpo(0.0)
-    , velocidad(1.0)
-    , velocidadMaxima(1.0)
-    , velocidadGiro(0.7)
+    , velocidad(1.5)
+    , velocidadMaxima(2.0)
+    , velocidadGiro(1.5)
     , torreta(nullptr)
     , anguloTorretaRel(0.0)
-    , velocidadGiroTorreta(0.7)
+    , velocidadGiroTorreta(2.0)
     , iaTimer(nullptr)
     , disparoTimer(nullptr)
     , reloadTimer(nullptr)
     , puedeDisparar(true)
     , firePlayer(nullptr)
     , fireAudio(nullptr)
+    , sentidoFlanqueo(1)
 {
     // ===== Chasis Tiger =====
     QPixmap chasis(":/images/tiger_chasis.png");
@@ -51,7 +54,7 @@ TanqueEnemigo::TanqueEnemigo(Tanque *objetivo, QGraphicsItem *parent)
     // ===== Timer de disparo =====
     disparoTimer = new QTimer(this);
     connect(disparoTimer, &QTimer::timeout, this, &TanqueEnemigo::disparar);
-    disparoTimer->start(2000); // intento de disparar cada 2s
+    disparoTimer->start(2000); // intento de disparo cada 2s
 
     // ===== Reload (recarga) 8s =====
     reloadTimer = new QTimer(this);
@@ -82,12 +85,38 @@ void TanqueEnemigo::actualizarIA()
     if (distancia < 1.0)
         return;
 
-    // Ángulo desde enemigo hacia jugador
-    double rad = qAtan2(vectorObjetivo.y(), vectorObjetivo.x());
-    double anguloDeseado = qRadiansToDegrees(rad) + 90.0;
+    // Ángulo hacia el jugador
+    double radLine = qAtan2(vectorObjetivo.y(), vectorObjetivo.x());
+    double anguloDeseado = qRadiansToDegrees(radLine) + 90.0;
 
-    // === Girar el chasis hacia el jugador ===
-    double diff = anguloDeseado - anguloCuerpo;
+    // ===== Comprobar si hay edificios bloqueando la línea de visión =====
+    bool lineaBloqueada = false;
+    if (scene()) {
+        QPainterPath rayo;
+        rayo.moveTo(centroEnemigo);
+        rayo.lineTo(centroJugador);
+
+        const auto itemsEscena = scene()->items();
+        for (QGraphicsItem *it : itemsEscena) {
+            if (it == this || it == objetivo)
+                continue;
+
+            auto *estructura = dynamic_cast<EstructuraMapa*>(it);
+            if (!estructura)
+                continue;
+
+            QPainterPath formaEstructura = estructura->mapToScene(estructura->shape());
+            if (rayo.intersects(formaEstructura)) {
+                lineaBloqueada = true;
+                break;
+            }
+        }
+    }
+
+    // ===== Girar el chasis SIEMPRE hacia el jugador =====
+    double anguloCuerpoObjetivo = anguloDeseado;
+
+    double diff = anguloCuerpoObjetivo - anguloCuerpo;
     while (diff > 180.0) diff -= 360.0;
     while (diff < -180.0) diff += 360.0;
 
@@ -99,19 +128,29 @@ void TanqueEnemigo::actualizarIA()
     anguloCuerpo += diff;
     setRotation(anguloCuerpo);
 
-    // === Distancia mínima para no acercarse tanto ===
-    double distanciaMinima = 300.0;   // antes 150.0 → ahora se queda más lejos
+    // ===== Movimiento del chasis =====
+    double distanciaMinima = 350.0;   // se mantiene a cierta distancia
 
-    // Si está más lejos que la distancia mínima, se acerca un poco
-    if (distancia > distanciaMinima) {
+    QPointF posAnterior = pos();
+
+    // Solo avanza si NO hay edificio tapando y está lejos
+    if (!lineaBloqueada && distancia > distanciaMinima) {
         double radCuerpo = qDegreesToRadians(anguloCuerpo - 90.0);
         double dx = qCos(radCuerpo) * velocidad;
         double dy = qSin(radCuerpo) * velocidad;
         setPos(x() + dx, y() + dy);
     }
-    // Si está más cerca, se queda quieto (no se pega al jugador)
 
-    // === Girar la torreta apuntando al jugador ===
+    // === Colisión con estructuras: si toca un edificio, volvemos atrás ===
+    QList<QGraphicsItem*> colisiones = collidingItems();
+    for (QGraphicsItem *item : colisiones) {
+        if (dynamic_cast<EstructuraMapa*>(item)) {
+            setPos(posAnterior);   // revertir movimiento
+            break;
+        }
+    }
+
+    // ===== Girar la torreta para apuntar SIEMPRE al jugador =====
     double anguloTorretaAbs = anguloCuerpo + anguloTorretaRel;
     double anguloTorretaDeseado = anguloDeseado;
 
@@ -128,19 +167,20 @@ void TanqueEnemigo::actualizarIA()
     torreta->setRotation(anguloTorretaRel);
 }
 
+
+
 void TanqueEnemigo::disparar()
 {
     if (!scene() || !objetivo)
         return;
 
-    // Respeto de recarga: solo dispara si puedeDisparar = true
     if (!puedeDisparar)
-        return;
+        return;   // en recarga
 
     puedeDisparar = false;
-    reloadTimer->start(8000);  // 8 segundos, igual que el jugador
+    reloadTimer->start(8000);  // 8 segundos
 
-    // Sonido de disparo enemigo
+    // Sonido
     if (firePlayer->playbackState() == QMediaPlayer::PlayingState) {
         firePlayer->setPosition(0);
     } else {
@@ -154,17 +194,17 @@ void TanqueEnemigo::disparar()
     QPointF v = centroJugador - centroTorretaScene;
     double dist = qSqrt(v.x()*v.x() + v.y()*v.y());
     if (dist < 10.0)
-        return; // muy cerca
+        return;
 
     // Dirección normalizada hacia el jugador
     QPointF dir(v.x() / dist, v.y() / dist);
 
-    // Posición inicial en la punta del cañón
+    // Punto de salida en la punta del cañón
     double barrelLength = torreta->boundingRect().height() / 2.0 + 5.0;
     QPointF muzzlePos = centroTorretaScene + dir * barrelLength;
 
-    // Crear proyectil
-    ProyectilTanque *bala = new ProyectilTanque(dir, false);  // false = disparo enemigo
+    // Crear proyectil (false = proyectil enemigo)
+    ProyectilTanque *bala = new ProyectilTanque(dir, false);
     bala->setPos(muzzlePos);
     scene()->addItem(bala);
 }
@@ -173,4 +213,5 @@ void TanqueEnemigo::recargar()
 {
     puedeDisparar = true;
 }
+
 

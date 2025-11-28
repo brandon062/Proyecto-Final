@@ -7,7 +7,7 @@
 #include "Tanque.h"
 #include "TanqueEnemigo.h"
 
-// Explosión del nivel 1: ajusta el include según tu proyecto
+#include "EstructuraMapa.h"
 #include "explosion.h"
 
 ProyectilTanque::ProyectilTanque(const QPointF &direccion, bool esDelJugador, QGraphicsItem *parent)
@@ -50,6 +50,15 @@ void ProyectilTanque::move()
     // === COLISIONES ===
     QList<QGraphicsItem *> coll = collidingItems();
     for (QGraphicsItem *item : coll) {
+
+        // 1) Si choca con un edificio, la bala desaparece
+        if (dynamic_cast<EstructuraMapa*>(item)) {
+            scene()->removeItem(this);
+            delete this;
+            return;
+        }
+
+
         if (delJugador) {
             // Proyectil del jugador golpea al enemigo
             TanqueEnemigo *enemigo = dynamic_cast<TanqueEnemigo*>(item);

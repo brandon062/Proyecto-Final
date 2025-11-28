@@ -12,6 +12,8 @@ CONFIG += c++17
 
 SOURCES += \
     Entidad.cpp \
+    EstructuraMapa.cpp \
+    Mina.cpp \
     NivelBatallaAerea.cpp \
     NivelBatallaTanque.cpp \
     ProyectilTanque.cpp \
@@ -30,6 +32,8 @@ HEADERS += \
     Avion.h \
     Entidad.h \
     EntidadMovil.h \
+    EstructuraMapa.h \
+    Mina.h \
     NivelBatallaAerea.h \
     NivelBatallaTanque.h \
     ProyectilTanque.h \

@@ -5,7 +5,8 @@
 #include <QGraphicsScene>
 #include "Tanque.h"
 #include "TanqueEnemigo.h"
-
+#include "EstructuraMapa.h"
+#include "Mina.h"
 class NivelBatallaTanque : public QGraphicsView
 {
     Q_OBJECT
@@ -15,7 +16,18 @@ public:
 private:
     QGraphicsScene *scene;
     Tanque *tanqueJugador;
-    TanqueEnemigo *tanqueEnemigo;   // <--- NUEVO
+    TanqueEnemigo *tanqueEnemigo;
+
+    // Estructuras del mapa
+    EstructuraMapa *estructura1;
+    EstructuraMapa *estructura2;
+    EstructuraMapa *estructura3;
+
+    // Minas
+    Mina *mina1;
+    Mina *mina2;
+    Mina *mina3;
+    Mina *mina4;
 };
 
 #endif // NIVELBATALLATANQUE_H

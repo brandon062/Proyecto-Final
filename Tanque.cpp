@@ -7,6 +7,10 @@
 #include <QUrl>
 #include <QGraphicsScene>
 #include "explosion.h"
+#include "EstructuraMapa.h"
+#include "Mina.h"
+
+
 Tanque::Tanque(QGraphicsItem *parent)
     : QObject()
     , QGraphicsPixmapItem(parent)
@@ -180,6 +184,7 @@ void Tanque::actualizarFisica()
 {
     if (destruido)
         return;
+
     // === Girar chasis ===
     if (girarIzquierda) {
         anguloCuerpo -= velocidadGiro;
@@ -212,7 +217,55 @@ void Tanque::actualizarFisica()
     double dx = qCos(rad) * velocidad;
     double dy = qSin(rad) * velocidad;
 
+    QPointF posAnterior = pos();
     setPos(x() + dx, y() + dy);
+
+    // === Colisión con estructuras ===
+    QList<QGraphicsItem*> colisiones = collidingItems();
+    for (QGraphicsItem *item : colisiones) {
+        if (dynamic_cast<EstructuraMapa*>(item)) {
+            // si chocó con una estructura, revertir movimiento
+            setPos(posAnterior);
+            velocidad = 0;
+            break;
+        }
+    }
+
+    // === Colisión con minas (solo afecta al jugador) ===
+    colisiones = collidingItems();  // recalculamos después de ajustar posición
+    for (QGraphicsItem *item : colisiones) {
+        Mina *mina = dynamic_cast<Mina*>(item);
+        if (mina) {
+            if (scene()) {
+                // Centro del jugador para la explosión
+                QPointF centro = mapToScene(boundingRect().center());
+
+                Explosion *exp = new Explosion();
+                scene()->addItem(exp);
+                exp->setPos(
+                    centro.x() - exp->boundingRect().width()  / 2.0,
+                    centro.y() - exp->boundingRect().height() / 2.0
+                    );
+            }
+
+            // Aplicar daño al jugador
+            recibirImpacto();
+
+            // Eliminar la mina del mapa
+            if (scene()) {
+                scene()->removeItem(mina);
+            }
+            delete mina;
+
+            // Si el tanque murió dentro de recibirImpacto(),
+            // 'destruido' estará en true, así que salimos de la función
+            if (destruido)
+                return;
+
+            // Si no murió, no queremos procesar más minas este frame
+            break;
+        }
+    }
 
     // === Rotación de la torreta ===
     if (girarTorretaIzq) {
@@ -223,7 +276,7 @@ void Tanque::actualizarFisica()
     }
     torreta->setRotation(anguloTorretaRel);
 
-    // === Sonido de movimiento (tank_driving.mp3) ===
+    // === Sonido de movimiento ===
     bool enMovimiento = qAbs(velocidad) > 0.1;
     if (enMovimiento) {
         if (drivingPlayer->playbackState() != QMediaPlayer::PlayingState) {
@@ -236,7 +289,7 @@ void Tanque::actualizarFisica()
         }
     }
 
-    // Mantener dentro de 800x600
+    // Límites de pantalla
     qreal minX = 0;
     qreal minY = 0;
     qreal maxX = 800 - boundingRect().width();
@@ -274,7 +327,7 @@ void Tanque::disparar()
     QPointF dir(qCos(rad), qSin(rad));
 
     // Punto de salida en la punta del cañón
-    double barrelLength = torreta->boundingRect().height() / 3.5 + 5.0; // ajusta si quieres
+    double barrelLength = torreta->boundingRect().height() / 3.5 + 5.0;
     QPointF muzzlePos = centroTorretaScene + dir * barrelLength;
 
     // Crear proyectil
@@ -312,7 +365,7 @@ void Tanque::recibirImpacto()
             scene()->removeItem(this);
         }
 
-        // OJO: NO hacemos delete this;
+        // no hacemos delete this;
         // así evitamos que TanqueEnemigo y otros timers usen un puntero borrado
     }
 }

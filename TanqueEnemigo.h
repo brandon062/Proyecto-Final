@@ -7,7 +7,7 @@
 #include <QMediaPlayer>
 #include <QAudioOutput>
 
-class Tanque;  // forward declaration del tanque jugador
+class Tanque;
 
 class TanqueEnemigo : public QObject, public QGraphicsPixmapItem
 {
@@ -47,6 +47,8 @@ private:
     // Sonido de disparo enemigo
     QMediaPlayer *firePlayer;
     QAudioOutput *fireAudio;
+
+    int sentidoFlanqueo;
 };
 
 #endif // TANQUEENEMIGO_H
