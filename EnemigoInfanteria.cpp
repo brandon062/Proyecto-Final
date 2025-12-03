@@ -5,369 +5,231 @@
 #include <QGraphicsScene>
 #include <QTimer>
 #include <QLineF>
-#include <QtMath>
 #include <QDebug>
+#include <QTransform>
 
-EnemigoInfanteria::EnemigoInfanteria(JugadorInfanteria *objetivo, QGraphicsItem *parent)
+
+EnemigoInfanteria::EnemigoInfanteria(JugadorInfanteria *objetivo,
+                                     QGraphicsItem *parent)
     : Soldado(parent)
     , jugador(objetivo)
-    , estadoActual(Patrulla)
-    , timerIA(new QTimer(this))
-    , timerAnimEnemy(new QTimer(this))
-    , xPatrullaInicio(0)
-    , xPatrullaFin(0)
-    , tiempoBusqueda(0)
-    , estadoAnimEnemigo(AnimIdleEnemy)
-    , frameEnemyIndex(0)
-    , shotEnemyFramesPlayed(0)
-    , cooldownDisparoEnemigoMs(500) // 0.5 segundos
+    , estado(Patrulla)
 {
-    // =====================================================
-    // ANIMACIONES DEL ENEMIGO (CARGA Y ESPEJADO)
-    // =====================================================
+    // Tamaño del sprite del enemigo
+    QSize size(120, 140);
 
-    idleRightEnemy.clear();
-    idleLeftEnemy.clear();
-    walkRightEnemy.clear();
-    walkLeftEnemy.clear();
-    shotRightEnemy.clear();
-    shotLeftEnemy.clear();
-    setEsJugador(false);
-
-    // Tamaño lógico base
-    QSize logicalSize(120, 140);
-
-    // IDLE ENEMIGO (idle_1_enemigo.png ... idle_9_enemigo.png)
+    // --------- CARGA DE SPRITES DE IDLE ----------
+    // idle_1_enemigo.png ... idle_9_enemigo.png
     for (int i = 1; i <= 9; ++i) {
-        QString path = QString(":/images/idle_%1_enemigo.png").arg(i);
-        QPixmap p(path);
-        if (!p.isNull()) {
-            QPixmap esc = p.scaled(logicalSize,
-                                   Qt::IgnoreAspectRatio,
-                                   Qt::SmoothTransformation);
-            idleRightEnemy.append(esc);
-            idleLeftEnemy.append(esc.transformed(QTransform().scale(-1, 1)));
-        } else {
-            qDebug() << "NO CARGÓ ENEMIGO IDLE:" << path;
-        }
+        QPixmap p(QString(":/images/idle_%1_enemigo.png").arg(i));
+        QPixmap e = p.scaled(size);
+        idleRight.append(e);                                  // mirando a la derecha
+        idleLeft.append(e.transformed(QTransform().scale(-1,1))); // espejo horizontal = izquierda
     }
 
-    // WALK ENEMIGO (walk2_1_enemigo.png ... walk2_8_enemigo.png)
+    // --------- CARGA DE SPRITES DE CAMINAR ----------
+    // walk2_1_enemigo.png ... walk2_8_enemigo.png
     for (int i = 1; i <= 8; ++i) {
-        QString path = QString(":/images/walk2_%1_enemigo.png").arg(i);
-        QPixmap p(path);
-        if (!p.isNull()) {
-            QPixmap esc = p.scaled(logicalSize,
-                                   Qt::IgnoreAspectRatio,
-                                   Qt::SmoothTransformation);
-            walkRightEnemy.append(esc);
-            walkLeftEnemy.append(esc.transformed(QTransform().scale(-1, 1)));
-        } else {
-            qDebug() << "NO CARGÓ ENEMIGO WALK:" << path;
-        }
+        QPixmap p(QString(":/images/walk2_%1_enemigo.png").arg(i));
+        QPixmap e = p.scaled(size);
+        walkRight.append(e);
+        walkLeft.append(e.transformed(QTransform().scale(-1,1)));
     }
 
-    // SHOT ENEMIGO (shot1_1_enemigo.png ... shot1_4_enemigo.png)
+    // --------- CARGA DE SPRITES DE DISPARO ----------
+    // shot1_1_enemigo.png ... shot1_4_enemigo.png
     for (int i = 1; i <= 4; ++i) {
-        QString path = QString(":/images/shot1_%1_enemigo.png").arg(i);
-        QPixmap p(path);
-        if (!p.isNull()) {
-            QPixmap esc = p.scaled(logicalSize,
-                                   Qt::IgnoreAspectRatio,
-                                   Qt::SmoothTransformation);
-            shotRightEnemy.append(esc);
-            shotLeftEnemy.append(esc.transformed(QTransform().scale(-1, 1)));
-        } else {
-            qDebug() << "NO CARGÓ ENEMIGO SHOT:" << path;
-        }
+        QPixmap p(QString(":/images/shot1_%1_enemigo.png").arg(i));
+        QPixmap e = p.scaled(size);
+        shotRight.append(e);
+        shotLeft.append(e.transformed(QTransform().scale(-1,1)));
     }
 
-    // DEAD ENEMIGO: dead2_1_enemigo.png .. dead2_4_enemigo.png
+    // --------- CARGA DE SPRITES DE MUERTE ----------
+    // dead2_1_enemigo.png ... dead2_4_enemigo.png
     for (int i = 1; i <= 4; ++i) {
-        QString path = QString(":/images/dead2_%1_enemigo.png").arg(i);
-        QPixmap p(path);
-        if (!p.isNull()) {
-            // Usa el mismo logicalSize que usaste para normalizar otras animaciones
-            QPixmap esc = p.scaled(logicalSize,
-                                   Qt::IgnoreAspectRatio,
-                                   Qt::SmoothTransformation);
-            deadRightEnemy.append(esc);
-            deadLeftEnemy.append(esc.transformed(QTransform().scale(-1, 1)));
-        } else {
-            qDebug() << "NO CARGÓ DeadEnemy:" << path;
-        }
+        QPixmap p(QString(":/images/dead2_%1_enemigo.png").arg(i));
+        QPixmap e = p.scaled(size);
+        deadRight.append(e);
+        deadLeft.append(e.transformed(QTransform().scale(-1,1)));
     }
 
-    // Sprite inicial
-    if (!idleRightEnemy.isEmpty()) {
-        setPixmap(idleRightEnemy[0]);
-    }
+    // Sprite inicial (idle mirando a la derecha)
+    setPixmap(idleRight[0]);
 
-    dirDisparo = -1; // Por defecto mirando a la izquierda
+    // =====================================================
+    //                      SONIDOS
+    // =====================================================
 
-    // Estado inicial de animación
-    estadoAnimEnemigo      = AnimIdleEnemy;
-    frameEnemyIndex        = 0;
-    shotEnemyFramesPlayed  = 0;
+    // Sonido cuando el enemigo recibe daño
+    damagePlayer = new QMediaPlayer;
+    damageAudio  = new QAudioOutput;
+    damagePlayer->setAudioOutput(damageAudio);
+    damagePlayer->setSource(QUrl("qrc:/sonidos/damage.mp3"));
 
-    // ------- SONIDO DE DAÑO ENEMIGO -------
-    damagePlayerEnemy = new QMediaPlayer(this);
-    damageAudioEnemy  = new QAudioOutput(this);
-    damagePlayerEnemy->setAudioOutput(damageAudioEnemy);
-    damageAudioEnemy->setVolume(0.9);
-    damagePlayerEnemy->setSource(QUrl("qrc:/sonidos/damage.mp3"));
+    // Sonido cuando el enemigo muere
+    deathPlayer = new QMediaPlayer;
+    deathAudio  = new QAudioOutput;
+    deathPlayer->setAudioOutput(deathAudio);
+    deathPlayer->setSource(QUrl("qrc:/sonidos/death_enemy.mp3"));
 
-    // ------- SONIDO DE MUERTE ENEMIGO -------
-    deathPlayerEnemy = new QMediaPlayer(this);
-    deathAudioEnemy  = new QAudioOutput(this);
-    deathPlayerEnemy->setAudioOutput(deathAudioEnemy);
-    deathAudioEnemy->setVolume(1.0);
-    deathPlayerEnemy->setSource(QUrl("qrc:/sonidos/death_enemy.mp3"));
+    // =====================================================
+    //                      TIMERS
+    // =====================================================
 
-    // Timer de animación (frames)
-    connect(timerAnimEnemy, &QTimer::timeout,
-            this, &EnemigoInfanteria::actualizarAnimacionEnemigo);
-    timerAnimEnemy->start(80);
+    // Timer que actualiza la IA (lógica de comportamiento)
+    timerIA = new QTimer;
+    connect(timerIA, &QTimer::timeout, this, &EnemigoInfanteria::actualizarIA);
+    timerIA->start(100);     // cada 100 ms se evalúa la IA
 
-    // Timer de IA
-    connect(timerIA, &QTimer::timeout,
-            this, &EnemigoInfanteria::actualizarIA);
-    timerIA->start(60);        // cada 60 ms actualiza IA
+    // Timer que actualiza la animación (cambio de frame)
+    timerAnim = new QTimer;
+    connect(timerAnim, &QTimer::timeout, this, &EnemigoInfanteria::actualizarAnimacion);
+    timerAnim->start(80);    // cambia frames cada 80 ms
 
-    // Cooldown de disparo enemigo
-    relojDisparoEnemigo.start();
+    // controlar el tiempo entre disparos (cooldown)
+    relojDisparo.start();
 }
 
-// ----------------------------------------
-// HELPER: distancia al jugador
-// ----------------------------------------
+// =====================================================
+//             FUNCIONES AUXILIARES DE IA
+// =====================================================
 
+// Distancia al jugador en píxeles
 qreal EnemigoInfanteria::distanciaAJugador() const
 {
     if (!jugador) return 1e9;
     return QLineF(pos(), jugador->pos()).length();
 }
 
-// ----------------------------------------
-// HELPER: detección del jugador
-// ----------------------------------------
-
+// Se considera que el jugador "es visible" si está dentro de cierto rango
 bool EnemigoInfanteria::jugadorVisible() const
 {
-    if (!scene() || !jugador) return false;
-
-    // Rango máximo de detección
-    const qreal rangoDeteccion = 420.0;
-    qreal dist = distanciaAJugador();
-    if (dist > rangoDeteccion)
-        return false;
-    return true;
+    return distanciaAJugador() < 500;
 }
 
-// ----------------------------------------
-// CAMBIO DE ESTADO DE IA
-// ----------------------------------------
-
+// Cambiar de estado de IA (patrulla, alerta, persecución, etc.)
 void EnemigoInfanteria::cambiarEstado(EstadoIA nuevo)
 {
-    if (estadoActual == nuevo)
-        return;
-
-    estadoActual = nuevo;
+    estado = nuevo;
 }
 
-// ----------------------------------------
-// IA: actualizarIA
-// ----------------------------------------
-
-void EnemigoInfanteria::actualizarIA()
-{
-    if (enemigoMuerto)
-        return;
-
-    // Si el jugador está muerto, detiene IA por completo
-    if (jugador && jugador->estaMuerto()) {
-
-        // detener movimiento
-        moverDerecha(false);
-        moverIzquierda(false);
-
-        // bloquear animación a Idle
-        estadoAnimEnemigo = AnimIdleEnemy;
-
-        return;
-    }
-    switch (estadoActual) {
-    case Patrulla:
-        comportamientoPatrulla();
-        break;
-    case Alerta:
-        comportamientoAlerta();
-        break;
-    case Persecucion:
-        comportamientoPersecucion();
-        break;
-    case Busqueda:
-        comportamientoBusqueda();
-        break;
-    }
-}
-
-// ----------------------------------------
-// IA: Patrulla
-// ----------------------------------------
+// =====================================================
+//                COMPORTAMIENTO: PATRULLA
+// =====================================================
 
 void EnemigoInfanteria::comportamientoPatrulla()
 {
-    if (!scene()) return;
-
-    // Inicializar rango de patrulla alrededor de la posición inicial
+    // Se define una zona de patrulla alrededor de la posición inicial
     if (xPatrullaInicio == 0 && xPatrullaFin == 0) {
         xPatrullaInicio = x() - 100;
         xPatrullaFin    = x() + 100;
     }
 
-    // Movimiento ida y vuelta
+    // Si llega al inicio, se mueve hacia la derecha
     if (x() <= xPatrullaInicio) {
         moverIzquierda(false);
         moverDerecha(true);
         dirDisparo = 1;
     }
-    else if (x() + boundingRect().width() >= xPatrullaFin) {
+    // Si llega al final, se mueve hacia la izquierda
+    else if (x() >= xPatrullaFin) {
         moverDerecha(false);
         moverIzquierda(true);
         dirDisparo = -1;
     }
 
-    // Si no se está moviendo por algo, empujar a la derecha
-    if (!moviendoDerecha && !moviendoIzquierda) {
-        moverDerecha(true);
-        dirDisparo = 1;
-    }
+    // Seleccionar animación Idle/Walk según movimiento
+    actualizarEstadoMovimiento();
 
-    // Decidir animación (walk/idle) según movimiento
-    actualizarEstadoAnimPorMovimiento();
-
-    // Si ve al jugador, pasar a alerta
-    if (jugadorVisible()) {
-        ultimaPosicionVista = jugador->pos();
+    // Si el jugador entra en rango, pasamos a Alerta
+    if (jugadorVisible())
         cambiarEstado(Alerta);
-    }
 }
 
-// ----------------------------------------
-// IA: Alerta
-// ----------------------------------------
+// =====================================================
+//                COMPORTAMIENTO: ALERTA
+// =====================================================
 
 void EnemigoInfanteria::comportamientoAlerta()
 {
-    if (!jugador) {
-        cambiarEstado(Patrulla);
-        return;
-    }
-
-    if (jugador && jugador->estaMuerto())
-        return;
-
-    // Quieto
-    moverDerecha(false);
+    // Se queda quieto
     moverIzquierda(false);
+    moverDerecha(false);
 
-    // Mirar hacia el jugador
-    if (jugador->x() < x())
-        dirDisparo = -1;
-    else
-        dirDisparo = 1;
+    // Mira hacia el lado donde esté el jugador
+    if (jugador)
+        dirDisparo = (jugador->x() < x() ? -1 : 1);
 
-    // Por defecto, idle
-    estadoAnimEnemigo = AnimIdleEnemy;
+    estadoAnim = AnimIdle;
 
-    // Si lo ve y está en rango, disparar con cooldown
-    qreal dist = distanciaAJugador();
-    if (jugadorVisible() && dist < 380.0) { // rango disparo ligeramente mayor
-        if (relojDisparoEnemigo.elapsed() >= cooldownDisparoEnemigoMs) {
-            estadoAnimEnemigo      = AnimShotEnemy;
-            frameEnemyIndex        = 0;
-            shotEnemyFramesPlayed  = 0;
+    // Si todavía ve al jugador, intenta disparar
+    if (jugadorVisible())
+    {
+        if (relojDisparo.elapsed() >= cooldownMs) {  // respeta el cooldown
+            estadoAnim = AnimShot;
+            frameIndex = 0;
+            shotFramesPlayed = 0;
 
-            disparar();
-            relojDisparoEnemigo.restart();
+            disparar();               // función heredada de Soldado (crea ProyectilInfanteria)
+            relojDisparo.restart();
         }
     }
 
-    // Si está muy cerca, pasar a persecución
-    if (jugadorVisible() && dist < 260.0) {
-        cambiarEstado(Persecucion);
-    }
-    else if (!jugadorVisible()) {
+    // Si deja de verlo, entra en modo búsqueda
+    if (!jugadorVisible()) {
         ultimaPosicionVista = jugador->pos();
-        tiempoBusqueda = 180; // 3 segundos
+        tiempoBusqueda = 180;         // 3 segundos
         cambiarEstado(Busqueda);
     }
+    // Si está suficientemente cerca, pasa a persecución (se mueve)
+    else if (distanciaAJugador() < 250)
+        cambiarEstado(Persecucion);
 }
 
-// ----------------------------------------
-// IA: Persecución
-// ----------------------------------------
+// =====================================================
+//             COMPORTAMIENTO: PERSECUCIÓN
+// =====================================================
 
 void EnemigoInfanteria::comportamientoPersecucion()
 {
-    if (!jugador) {
-        cambiarEstado(Patrulla);
-        return;
-    }
-
-    if (jugador && jugador->estaMuerto())
-        return;
+    if (!jugador) return;
 
     qreal dist = distanciaAJugador();
-    const qreal distMin   = 120.0;
-    const qreal distIdeal = 220.0;
 
-    moverDerecha(false);
     moverIzquierda(false);
+    moverDerecha(false);
 
-    // Ajustar distancia: acercarse o alejarse
-    if (dist > distIdeal) {
-        // Muy lejos -> acercarse
-        if (jugador->x() < x()) {
-            moverIzquierda(true);
-            dirDisparo = -1;
-        } else {
-            moverDerecha(true);
-            dirDisparo = 1;
-        }
+    const qreal minDist   = 120;  // distancia mínima (si está más cerca, se aleja)
+    const qreal idealDist = 200;  // punto "ideal" para disparar
+
+    // Si está lejos del jugador, se acerca
+    if (dist > idealDist) {
+        if (jugador->x() < x()) moverIzquierda(true), dirDisparo = -1;
+        else                    moverDerecha(true),  dirDisparo =  1;
     }
-    else if (dist < distMin) {
-        // Muy cerca -> alejarse
-        if (jugador->x() < x()) {
-            moverDerecha(true);
-            dirDisparo = 1;
-        } else {
-            moverIzquierda(true);
-            dirDisparo = -1;
-        }
-    }
-    else {
-        // En zona ideal de distancia, puede quedarse quieto
+    // Si está demasiado cerca, se aleja
+    else if (dist < minDist) {
+        if (jugador->x() < x()) moverDerecha(true),  dirDisparo =  1;
+        else                    moverIzquierda(true),dirDisparo = -1;
     }
 
-    // Animación según movimiento
-    actualizarEstadoAnimPorMovimiento();
+    // Ajustar animación Idle/Walk según se mueva o no
+    actualizarEstadoMovimiento();
 
-    // Disparar si lo ve y está en rango
-    if (jugadorVisible() && dist < 400.0) {
-        if (relojDisparoEnemigo.elapsed() >= cooldownDisparoEnemigoMs) {
-            estadoAnimEnemigo      = AnimShotEnemy;
-            frameEnemyIndex        = 0;
-            shotEnemyFramesPlayed  = 0;
-
+    // Si lo ve y está en rango, dispara
+    if (jugadorVisible() && dist < 350)
+    {
+        if (relojDisparo.elapsed() >= cooldownMs) {
+            estadoAnim = AnimShot;
+            frameIndex = 0;
+            shotFramesPlayed = 0;
             disparar();
-            relojDisparoEnemigo.restart();
+            relojDisparo.restart();
         }
     }
 
-    // Si deja de verlo, pasar a búsqueda
+    // Si lo pierde de vista, entra en búsqueda
     if (!jugadorVisible()) {
         ultimaPosicionVista = jugador->pos();
         tiempoBusqueda = 180;
@@ -375,18 +237,16 @@ void EnemigoInfanteria::comportamientoPersecucion()
     }
 }
 
-// ----------------------------------------
-// IA: Búsqueda
-// ----------------------------------------
+// =====================================================
+//             COMPORTAMIENTO: BÚSQUEDA
+// =====================================================
 
 void EnemigoInfanteria::comportamientoBusqueda()
 {
-    if (!scene()) return;
-
-    moverDerecha(false);
     moverIzquierda(false);
+    moverDerecha(false);
 
-    // Ir hacia la última posición vista del jugador
+    // Se dirige hacia la última posición donde vio al jugador
     if (ultimaPosicionVista.x() < x()) {
         moverIzquierda(true);
         dirDisparo = -1;
@@ -395,145 +255,157 @@ void EnemigoInfanteria::comportamientoBusqueda()
         dirDisparo = 1;
     }
 
-    actualizarEstadoAnimPorMovimiento();
+    actualizarEstadoMovimiento();
 
+    // Disminuye el tiempo de búsqueda
     tiempoBusqueda--;
+
+    // Si se acaba el tiempo, vuelve a patrulla
     if (tiempoBusqueda <= 0) {
         cambiarEstado(Patrulla);
-        moverDerecha(false);
-        moverIzquierda(false);
-        estadoAnimEnemigo = AnimIdleEnemy;
         return;
     }
 
-    // Si lo vuelve a ver, volver a persecución
-    if (jugadorVisible()) {
+    // Si vuelve a ver al jugador, pasa a persecución
+    if (jugadorVisible())
         cambiarEstado(Persecucion);
+}
+
+// =====================================================
+//               LOOP DE IA PRINCIPAL
+// =====================================================
+
+void EnemigoInfanteria::actualizarIA()
+{
+    if (enemigoMuerto) return;
+
+    // Si el jugador ya está muerto, el enemigo deja de moverse y solo queda idle
+    if (!jugador || jugador->estaMuerto()) {
+        estadoAnim = AnimIdle;
+        return;
+    }
+
+    switch (estado) {
+    case Patrulla:     comportamientoPatrulla();     break;
+    case Alerta:       comportamientoAlerta();       break;
+    case Persecucion:  comportamientoPersecucion();  break;
+    case Busqueda:     comportamientoBusqueda();     break;
     }
 }
 
-// ----------------------------------------
-// ANIMACIÓN: decidir Idle/Walk según movimiento
-// ----------------------------------------
+// =====================================================
+//     SELECCIONAR ANIMACIÓN SEGÚN MOVIMIENTO
+// =====================================================
 
-void EnemigoInfanteria::actualizarEstadoAnimPorMovimiento()
+void EnemigoInfanteria::actualizarEstadoMovimiento()
 {
-    // Si está en animación de disparo, no sobre-escribir
-    if (estadoAnimEnemigo == AnimShotEnemy)
+    // No cambiamos animación si está disparando o muerto
+    if (estadoAnim == AnimShot || estadoAnim == AnimDead)
         return;
 
+    // moviendoDerecha / moviendoIzquierda vienen de Soldado
     if (moviendoDerecha || moviendoIzquierda)
-        estadoAnimEnemigo = AnimWalkEnemy;
+        estadoAnim = AnimWalk;
     else
-        estadoAnimEnemigo = AnimIdleEnemy;
+        estadoAnim = AnimIdle;
 }
 
-// ----------------------------------------
-// ANIMACIÓN: actualizarAnimacionEnemigo()
-// ----------------------------------------
+// =====================================================
+//           ACTUALIZACIÓN DE ANIMACIÓN (frames)
+// =====================================================
 
-void EnemigoInfanteria::actualizarAnimacionEnemigo()
+void EnemigoInfanteria::actualizarAnimacion()
 {
     const QVector<QPixmap> *frames = nullptr;
-    bool mirandoDerecha = (dirDisparo > 0);
+    bool der = (dirDisparo > 0);
 
-    switch (estadoAnimEnemigo) {
-    case AnimIdleEnemy:
-        frames = mirandoDerecha ? &idleRightEnemy : &idleLeftEnemy;
-        break;
-    case AnimWalkEnemy:
-        frames = mirandoDerecha ? &walkRightEnemy : &walkLeftEnemy;
-        break;
-    case AnimShotEnemy:
-        frames = mirandoDerecha ? &shotRightEnemy : &shotLeftEnemy;
-        break;
-    case AnimDeadEnemy:
-        frames = mirandoDerecha ? &deadRightEnemy : &deadLeftEnemy;
-        break;
+    // Elegir el conjunto de frames según el estado actual
+    switch (estadoAnim) {
+    case AnimIdle:  frames = der ? &idleRight : &idleLeft; break;
+    case AnimWalk:  frames = der ? &walkRight : &walkLeft; break;
+    case AnimShot:  frames = der ? &shotRight : &shotLeft; break;
+    case AnimDead:  frames = der ? &deadRight : &deadLeft; break;
     }
 
-
+    // si por alguna razón no hay frames, no se hace nada
     if (!frames || frames->isEmpty())
         return;
 
-    switch (estadoAnimEnemigo) {
-
-    case AnimIdleEnemy:
-    case AnimWalkEnemy:
-        frameEnemyIndex = (frameEnemyIndex + 1) % frames->size();
-        setPixmap(frames->at(frameEnemyIndex));
+    switch (estadoAnim)
+    {
+    case AnimIdle:
+    case AnimWalk:
+        // Animación en bucle
+        frameIndex = (frameIndex + 1) % frames->size();
+        setPixmap(frames->at(frameIndex));
         break;
 
-    case AnimShotEnemy:
-        if (frameEnemyIndex >= frames->size())
-            frameEnemyIndex = frames->size() - 1;
+    case AnimShot:
+        // Animación de disparo que se reproduce una sola vez
+        if (frameIndex >= frames->size())
+            frameIndex = frames->size()-1;
 
-        setPixmap(frames->at(frameEnemyIndex));
-        frameEnemyIndex++;
-        shotEnemyFramesPlayed++;
+        setPixmap(frames->at(frameIndex));
+        frameIndex++;
+        shotFramesPlayed++;
 
-        if (shotEnemyFramesPlayed >= frames->size()) {
-            // Al terminar el disparo, la IA decidirá si Idle o Walk
-            // según movimiento en el próximo tick de IA
-            if (moviendoDerecha || moviendoIzquierda)
-                estadoAnimEnemigo = AnimWalkEnemy;
-            else
-                estadoAnimEnemigo = AnimIdleEnemy;
-
-            frameEnemyIndex       = 0;
-            shotEnemyFramesPlayed = 0;
+        // Cuando termina la animación de disparo, volver a Idle o Walk
+        if (shotFramesPlayed >= frames->size()) {
+            estadoAnim = (moviendoDerecha || moviendoIzquierda) ? AnimWalk : AnimIdle;
+            frameIndex = 0;
+            shotFramesPlayed = 0;
         }
         break;
-    case AnimDeadEnemy:
-        if (frameEnemyIndex >= frames->size())
-            frameEnemyIndex = frames->size() - 1;
 
-        setPixmap(frames->at(frameEnemyIndex));
-
-        if (frameEnemyIndex < frames->size() - 1)
-            frameEnemyIndex++;
-
-        // no se cambia de estado, se queda congelado
+    case AnimDead:
+        // Animación de muerte, avanza hasta el último frame y se queda ahí
+        if (frameIndex < frames->size())
+            setPixmap(frames->at(frameIndex));
+        if (frameIndex < frames->size()-1)
+            frameIndex++;
         break;
     }
 }
+
+// =====================================================
+//          CUANDO EL ENEMIGO RECIBE UN DISPARO
+// =====================================================
 
 void EnemigoInfanteria::recibirDisparo()
 {
     if (enemigoMuerto) return;
 
-    // Sonido de daño
-    if (damagePlayerEnemy) {
-        if (damagePlayerEnemy->playbackState() == QMediaPlayer::PlayingState)
-            damagePlayerEnemy->setPosition(0);
-        else
-            damagePlayerEnemy->play();
-    }
+    // Reproducir sonido de daño
+    if (damagePlayer)
+        damagePlayer->play();
 
+    // Este enemigo normal muere con un solo disparo
     enemigoMuerto = true;
 
-    // Detener IA y movimiento
-    if (timerIA) timerIA->stop();
-    moverDerecha(false);
+    // Detener movimiento
     moverIzquierda(false);
+    moverDerecha(false);
 
-    // Animación de muerte
-    iniciarAnimacionMuerteEnemigo();
+    // Iniciar animación de muerte
+    iniciarAnimacionMuerte();
 
     // Sonido de muerte
-    if (deathPlayerEnemy) {
-        deathPlayerEnemy->play();
-    }
+    if (deathPlayer)
+        deathPlayer->play();
 
-    QTimer::singleShot(4000, this, [this]() {
+    // Borrarlo de la escena después de 4s (cuando termina la animación)
+    QTimer::singleShot(4000, this, [this](){
         if (scene()) scene()->removeItem(this);
         delete this;
     });
 }
 
-void EnemigoInfanteria::iniciarAnimacionMuerteEnemigo()
+// Inicializa el estado de animación de muerte
+void EnemigoInfanteria::iniciarAnimacionMuerte()
 {
-    estadoAnimEnemigo = AnimDeadEnemy;
-    frameEnemyIndex = 0;
+    estadoAnim = AnimDead;
+    frameIndex = 0;
 }
+
+
 

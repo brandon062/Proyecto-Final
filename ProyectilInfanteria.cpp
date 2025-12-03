@@ -5,6 +5,9 @@
 #include <QGraphicsScene>
 #include <QPixmap>
 #include <QList>
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QGraphicsItem>
 
 ProyectilInfanteria::ProyectilInfanteria(int dir, bool delJugador, QGraphicsItem *parent)
     : QObject()
@@ -14,7 +17,7 @@ ProyectilInfanteria::ProyectilInfanteria(int dir, bool delJugador, QGraphicsItem
     , timer(new QTimer(this))
     , esDelJugador(delJugador)
 {
-    // Sprite del proyectil (ajusta ruta/tamaño si quieres otro)
+    // Sprite del proyectil
     QPixmap sprite(":/images/proyectil_tanque.png");
     if (!sprite.isNull()) {
         QPixmap esc = sprite.scaled(16, 4,
@@ -37,37 +40,66 @@ void ProyectilInfanteria::mover()
         return;
     }
 
-    // 1) Revisar colisiones antes de movernos
+    // 1) Revisar colisiones
     QList<QGraphicsItem*> colisiones = collidingItems();
     for (QGraphicsItem *item : colisiones) {
 
         if (esDelJugador) {
-            // Bala del jugador: impacta enemigos de infantería
+            // Bala del jugador: impacta enemigos
             if (auto enemigo = dynamic_cast<EnemigoInfanteria*>(item)) {
-                enemigo->recibirDisparo();   // el enemigo maneja su animación de muerte
-
-                deleteLater();               // destruir este proyectil
+                enemigo->recibirDisparo();
+                deleteLater();
                 return;
             }
         } else {
             // Bala enemiga: impacta al jugador
             if (auto jugador = dynamic_cast<JugadorInfanteria*>(item)) {
-                jugador->recibirDisparo();   // resta 1 vida y anima muerte si llega a 0
-
+                jugador->recibirDisparo();
                 deleteLater();
                 return;
             }
         }
     }
 
-    // 2) Movimiento rectilíneo
+    // 2) Movimiento recto
     setPos(x() + direccion * velocidad, y());
 
-    // 3) Eliminar si sale de la escena
-    if (x() < -100 || x() > scene()->width() + 100 ||
-        y() < -100 || y() > scene()->height() + 100) {
-        deleteLater();
+    // 3) Eliminar si sale del área visible (para balas del jugador)
+    QRectF projRect = sceneBoundingRect();
+
+    // Si no hay ninguna vista asociada, usamos el mundo completo como fallback
+    QGraphicsView *view = scene()->views().isEmpty()
+                              ? nullptr
+                              : scene()->views().first();
+
+    if (view) {
+        // Rectángulo visible actualmente en pantalla
+        QRectF visibleRect =
+            view->mapToScene(view->viewport()->rect()).boundingRect();
+
+        if (esDelJugador) {
+            // Bala del jugador: se elimina cuando sale de la pantalla visible
+            if (!visibleRect.intersects(projRect)) {
+                deleteLater();
+                return;
+            }
+        } else {
+            // Bala enemiga: podemos seguir usando el mundo completo
+            QRectF worldRect = scene()->sceneRect();
+            if (!worldRect.intersects(projRect)) {
+                deleteLater();
+                return;
+            }
+        }
+    } else {
+        // Si por alguna razón no hay view, usamos el mundo como fallback
+        QRectF worldRect = scene()->sceneRect();
+        if (!worldRect.intersects(projRect)) {
+            deleteLater();
+            return;
+        }
     }
 }
+
 
 

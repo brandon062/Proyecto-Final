@@ -113,5 +113,32 @@
         <file>walk2_7_enemigo.png</file>
         <file>walk2_8_enemigo.png</file>
         <file>corazon.png</file>
+        <file>bg3.png</file>
+        <file>dead_1_final.png</file>
+        <file>dead_2_final.png</file>
+        <file>dead_3_final.png</file>
+        <file>dead_4_final.png</file>
+        <file>idle_1_final.png</file>
+        <file>idle_2_final.png</file>
+        <file>idle_3_final.png</file>
+        <file>idle_4_final.png</file>
+        <file>idle_5_final.png</file>
+        <file>idle_6_final.png</file>
+        <file>idle_7_final.png</file>
+        <file>idle_8_final.png</file>
+        <file>idle_9_final.png</file>
+        <file>shot_1_final.png</file>
+        <file>shot_2_final.png</file>
+        <file>shot_3_final.png</file>
+        <file>shot_4_final.png</file>
+        <file>walk_1_final.png</file>
+        <file>walk_2_final.png</file>
+        <file>walk_3_final.png</file>
+        <file>walk_4_final.png</file>
+        <file>walk_5_final.png</file>
+        <file>walk_6_final.png</file>
+        <file>walk_7_final.png</file>
+        <file>walk_8_final.png</file>
+        <file>dead_5_final.png</file>
     </qresource>
 </RCC>

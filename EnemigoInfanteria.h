@@ -2,16 +2,17 @@
 #define ENEMIGOINFANTERIA_H
 
 #include "Soldado.h"
-#include <QPointF>
+#include <QVector>
 #include <QPixmap>
-#include <QMediaPlayer>
-#include <QAudioOutput>
+#include <QElapsedTimer>
 
 class JugadorInfanteria;
+class QTimer;
 
 class EnemigoInfanteria : public Soldado
 {
     Q_OBJECT
+
 public:
     explicit EnemigoInfanteria(JugadorInfanteria *objetivo,
                                QGraphicsItem *parent = nullptr);
@@ -23,78 +24,75 @@ public:
         Busqueda
     };
 
-    void recibirDisparo();
-
+    virtual void recibirDisparo();
+    bool estaMuerto() const { return enemigoMuerto; }
 
 protected slots:
     void actualizarIA();
-    void actualizarAnimacionEnemigo();
+    void actualizarAnimacion();
 
-private:
+protected:
+    // Acceso para EnemigoFinalInfanteria
+    QVector<QPixmap> idleRight, idleLeft;
+    QVector<QPixmap> walkRight, walkLeft;
+    QVector<QPixmap> shotRight, shotLeft;
+    QVector<QPixmap> deadRight, deadLeft;
+
+    bool enemigoMuerto = false;
+
+    void iniciarAnimacionMuerte();
+
+    // Animación
+    enum AnimState {
+        AnimIdle,
+        AnimWalk,
+        AnimShot,
+        AnimDead
+    };
+    AnimState estadoAnim = AnimIdle;
+
+    int frameIndex = 0;
+    int shotFramesPlayed = 0;
+
+    void actualizarEstadoMovimiento();
+
+    // IA
     JugadorInfanteria *jugador;
-    EstadoIA estadoActual;
-    QTimer *timerIA;
+    EstadoIA estado;
 
-    qreal xPatrullaInicio;
-    qreal xPatrullaFin;
+    QTimer *timerIA = nullptr;
+    QTimer *timerAnim = nullptr;
+
+    qreal xPatrullaInicio = 0;
+    qreal xPatrullaFin = 0;
 
     QPointF ultimaPosicionVista;
-    int tiempoBusqueda;
-
-    QPixmap spriteDer;
-    QPixmap spriteIzq;
-
-    void cambiarEstado(EstadoIA nuevo);
-    void comportamientoPatrulla();
-    void comportamientoAlerta();
-    void comportamientoPersecucion();
-    void comportamientoBusqueda();
+    int tiempoBusqueda = 0;
 
     bool jugadorVisible() const;
     qreal distanciaAJugador() const;
 
-    enum AnimEnemyState {
-        AnimIdleEnemy,
-        AnimWalkEnemy,
-        AnimShotEnemy,
-        AnimDeadEnemy
-    };
+    void comportamientoPatrulla();
+    void comportamientoAlerta();
+    void comportamientoPersecucion();
+    void comportamientoBusqueda();
+    void cambiarEstado(EstadoIA nuevo);
 
-    AnimEnemyState estadoAnimEnemigo;
+    // DISPARO
+    QElapsedTimer relojDisparo;
+    int cooldownMs = 800;
 
-    //helper
-    void actualizarEstadoAnimPorMovimiento();
+    // Sonidos
+    QMediaPlayer *damagePlayer = nullptr;
+    QAudioOutput *damageAudio = nullptr;
 
-    QVector<QPixmap> idleRightEnemy;
-    QVector<QPixmap> idleLeftEnemy;
-
-    QVector<QPixmap> walkRightEnemy;
-    QVector<QPixmap> walkLeftEnemy;
-
-    QVector<QPixmap> shotRightEnemy;
-    QVector<QPixmap> shotLeftEnemy;
-
-    QTimer *timerAnimEnemy;
-    int frameEnemyIndex;
-    int shotEnemyFramesPlayed;
-
-    QElapsedTimer relojDisparoEnemigo;
-    int cooldownDisparoEnemigoMs = 500;
-
-    bool enemigoMuerto = false;
-
-    QVector<QPixmap> deadRightEnemy;
-    QVector<QPixmap> deadLeftEnemy;
-
-    void iniciarAnimacionMuerteEnemigo();
-
-    QMediaPlayer *damagePlayerEnemy = nullptr;
-    QAudioOutput *damageAudioEnemy  = nullptr;
-
-    QMediaPlayer *deathPlayerEnemy  = nullptr;
-    QAudioOutput *deathAudioEnemy   = nullptr;
+    QMediaPlayer *deathPlayer = nullptr;
+    QAudioOutput *deathAudio = nullptr;
 };
 
 #endif // ENEMIGOINFANTERIA_H
+
+
+
 
 

@@ -12,6 +12,7 @@ CONFIG += c++17
 
 SOURCES += \
     CajaReparacion.cpp \
+    EnemigoFinalInfanteria.cpp \
     EnemigoInfanteria.cpp \
     Entidad.cpp \
     EstructuraMapa.cpp \
@@ -38,6 +39,7 @@ SOURCES += \
 HEADERS += \
     Avion.h \
     CajaReparacion.h \
+    EnemigoFinalInfanteria.h \
     EnemigoInfanteria.h \
     Entidad.h \
     EntidadMovil.h \
