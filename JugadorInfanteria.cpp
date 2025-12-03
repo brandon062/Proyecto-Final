@@ -46,7 +46,7 @@ JugadorInfanteria::JugadorInfanteria(QGraphicsItem *parent)
 
     // se usa temporalmente Idle1 para medir el tamaño lógico
     setPixmap(idleTemp[0]);
-    setScale(1.0); // aseguramos escala 1:1
+    setScale(1.0);
     QSizeF logicalSizeF = boundingRect().size();
     QSize  logicalSize  = logicalSizeF.toSize();
 
@@ -415,7 +415,7 @@ void JugadorInfanteria::actualizarAnimacion()
         // Cuando terminan los frames de lanzar:
         if (grenadeFramesPlayed >= frames->size()) {
 
-            // Lanzamos la granada SOLO una vez por animación
+            // Se lanza la granada SOLO una vez por animación
             if (!granadaLanzadaEnEstaAnim) {
                 Soldado::lanzarGranada();
                 granadaLanzadaEnEstaAnim = true;

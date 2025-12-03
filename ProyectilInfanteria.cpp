@@ -67,7 +67,7 @@ void ProyectilInfanteria::mover()
     // 3) Eliminar si sale del área visible (para balas del jugador)
     QRectF projRect = sceneBoundingRect();
 
-    // Si no hay ninguna vista asociada, usamos el mundo completo como fallback
+    // Si no hay ninguna vista asociada, se usa el mundo completo como fallback
     QGraphicsView *view = scene()->views().isEmpty()
                               ? nullptr
                               : scene()->views().first();

@@ -356,14 +356,13 @@ void NivelBatallaTanque::verificarProgreso()
     // === NIVEL 3: Misión completada ===
     if (nivelActual == 3) {
         if (!hayEnemigos) {
-            mostrarMisionCompletada();   // 👈 aquí lanzamos el mensaje y la música
+            mostrarMisionCompletada();
         }
         return;   // en nivel 3 ya no hay más escenas por arriba
     }
 
     // === NIVELES 1 y 2: lógica de avanzar ===
 
-    // texto "sigue avanzando" cuando ya no hay enemigos
     if (!hayEnemigos && !mensajeMostrado) {
         mensajeAvanzar = scene->addText("Todos los enemigos destruidos, sigue avanzando!");
         QFont fuente("Arial", 14);
@@ -510,7 +509,7 @@ void NivelBatallaTanque::keyPressEvent(QKeyEvent *event)
         enGameOver = false;
         enTransicion = false;
 
-        // 🎵 Reiniciar música de fondo desde fondo1
+        //  Reiniciar música de fondo desde fondo1
         bgTrackIndex = 1;
         bgPlayer->setSource(QUrl("qrc:/sonidos/fondo1.mp3"));
         bgPlayer->play();

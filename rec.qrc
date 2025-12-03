@@ -21,6 +21,8 @@
         <file>lanzar.mp3</file>
         <file>shot.mp3</file>
         <file>walk.mp3</file>
+        <file>fondo3.mp3</file>
+        <file>fondo4.mp3</file>
     </qresource>
     <qresource prefix="/images">
         <file>avion_jugador.png</file>

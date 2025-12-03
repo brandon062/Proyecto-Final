@@ -5,7 +5,7 @@
 #include "jugador.h"
 #include "NivelBatallaAerea.h"
 #include "explosion.h"
-extern juego *Juego;   // igual que en proyectil.cpp :contentReference[oaicite:0]{index=0}
+extern juego *Juego;
 
 proyectilEnemigo::proyectilEnemigo(QGraphicsItem *parent)
     : QObject(), QGraphicsPixmapItem(parent)

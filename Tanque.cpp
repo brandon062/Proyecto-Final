@@ -81,7 +81,7 @@ Tanque::Tanque(QGraphicsItem *parent)
     drivingPlayer->setAudioOutput(drivingAudio);
     drivingAudio->setVolume(0.7);
     drivingPlayer->setSource(QUrl("qrc:/sonidos/tank_driving.mp3"));
-    drivingPlayer->setLoops(QMediaPlayer::Infinite);   // solo lo encendemos/apagamos
+    drivingPlayer->setLoops(QMediaPlayer::Infinite);
 
     // ===== Sonido de torreta (tank_turret.mp3) =====
     turretPlayer = new QMediaPlayer(this);
@@ -182,7 +182,7 @@ void Tanque::keyReleaseEvent(QKeyEvent *event)
 
     case Qt::Key_Right:
         girarTorretaDer = false;
-        if (!girarTorretaIzq) {              // si no sigues girando a la izquierda
+        if (!girarTorretaIzq) {              // si no sigue girando a la izquierda
             turretPlayer->stop();
             turretPlayer->setPosition(0);
         }
@@ -453,7 +453,6 @@ void Tanque::recibirImpacto()
         if (scene()) {
             scene()->removeItem(this);
         }
-        // NO hacemos delete this;
     }
 }
 

@@ -105,7 +105,7 @@ qreal EnemigoInfanteria::distanciaAJugador() const
 // Se considera que el jugador "es visible" si está dentro de cierto rango
 bool EnemigoInfanteria::jugadorVisible() const
 {
-    return distanciaAJugador() < 500;
+    return distanciaAJugador() < 460;
 }
 
 // Cambiar de estado de IA (patrulla, alerta, persecución, etc.)
@@ -201,7 +201,7 @@ void EnemigoInfanteria::comportamientoPersecucion()
     moverDerecha(false);
 
     const qreal minDist   = 120;  // distancia mínima (si está más cerca, se aleja)
-    const qreal idealDist = 200;  // punto "ideal" para disparar
+    const qreal idealDist = 280;  // punto "ideal" para disparar
 
     // Si está lejos del jugador, se acerca
     if (dist > idealDist) {
