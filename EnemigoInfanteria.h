@@ -4,6 +4,8 @@
 #include "Soldado.h"
 #include <QPointF>
 #include <QPixmap>
+#include <QMediaPlayer>
+#include <QAudioOutput>
 
 class JugadorInfanteria;
 
@@ -20,6 +22,9 @@ public:
         Persecucion,
         Busqueda
     };
+
+    void recibirDisparo();
+
 
 protected slots:
     void actualizarIA();
@@ -51,7 +56,8 @@ private:
     enum AnimEnemyState {
         AnimIdleEnemy,
         AnimWalkEnemy,
-        AnimShotEnemy
+        AnimShotEnemy,
+        AnimDeadEnemy
     };
 
     AnimEnemyState estadoAnimEnemigo;
@@ -74,6 +80,19 @@ private:
 
     QElapsedTimer relojDisparoEnemigo;
     int cooldownDisparoEnemigoMs = 500;
+
+    bool enemigoMuerto = false;
+
+    QVector<QPixmap> deadRightEnemy;
+    QVector<QPixmap> deadLeftEnemy;
+
+    void iniciarAnimacionMuerteEnemigo();
+
+    QMediaPlayer *damagePlayerEnemy = nullptr;
+    QAudioOutput *damageAudioEnemy  = nullptr;
+
+    QMediaPlayer *deathPlayerEnemy  = nullptr;
+    QAudioOutput *deathAudioEnemy   = nullptr;
 };
 
 #endif // ENEMIGOINFANTERIA_H

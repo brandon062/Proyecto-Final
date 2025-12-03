@@ -14,6 +14,13 @@
         <file>fondo1.mp3</file>
         <file>fondo2.mp3</file>
         <file>mision_completa.mp3</file>
+        <file>damage.mp3</file>
+        <file>death.mp3</file>
+        <file>death_enemy.mp3</file>
+        <file>explosion_grenade.mp3</file>
+        <file>lanzar.mp3</file>
+        <file>shot.mp3</file>
+        <file>walk.mp3</file>
     </qresource>
     <qresource prefix="/images">
         <file>avion_jugador.png</file>
@@ -105,5 +112,6 @@
         <file>walk2_6_enemigo.png</file>
         <file>walk2_7_enemigo.png</file>
         <file>walk2_8_enemigo.png</file>
+        <file>corazon.png</file>
     </qresource>
 </RCC>

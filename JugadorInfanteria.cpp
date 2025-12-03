@@ -22,6 +22,8 @@ JugadorInfanteria::JugadorInfanteria(QGraphicsItem *parent)
     shotLeft.clear();
     grenadeRight.clear();
     grenadeLeft.clear();
+    setEsJugador(true);
+    relojGranada.start();
 
     //
     // 1) Cargar todos los Idle
@@ -102,6 +104,21 @@ JugadorInfanteria::JugadorInfanteria(QGraphicsItem *parent)
         }
     }
 
+    // DEAD 1..4 (jugador muerto)
+    for (int i = 1; i <= 4; ++i) {
+        QString path = QString(":/images/dead_%1.png").arg(i);
+        QPixmap p(path);
+        if (!p.isNull()) {
+            QPixmap esc = p.scaled(logicalSize,
+                                   Qt::IgnoreAspectRatio,
+                                   Qt::SmoothTransformation);
+            deadRight.append(esc);
+            deadLeft.append(esc.transformed(QTransform().scale(-1, 1)));
+        } else {
+            qDebug() << "NO CARGÓ Dead:" << path;
+        }
+    }
+
     //
     // 3) Configuración inicial
     //
@@ -122,6 +139,27 @@ JugadorInfanteria::JugadorInfanteria(QGraphicsItem *parent)
 
     setFlag(QGraphicsItem::ItemIsFocusable);
     setFocus();
+
+    // ------- SONIDO DE LANZAR GRANADA -------
+    throwPlayer = new QMediaPlayer(this);
+    throwAudio  = new QAudioOutput(this);
+    throwPlayer->setAudioOutput(throwAudio);
+    throwAudio->setVolume(0.8);
+    throwPlayer->setSource(QUrl("qrc:/sonidos/lanzar.mp3"));
+
+    // ------- SONIDO DE DAÑO -------
+    damagePlayer = new QMediaPlayer(this);
+    damageAudio  = new QAudioOutput(this);
+    damagePlayer->setAudioOutput(damageAudio);
+    damageAudio->setVolume(0.9);
+    damagePlayer->setSource(QUrl("qrc:/sonidos/damage.mp3"));
+
+    // ------- SONIDO DE MUERTE -------
+    deathPlayer = new QMediaPlayer(this);
+    deathAudio  = new QAudioOutput(this);
+    deathPlayer->setAudioOutput(deathAudio);
+    deathAudio->setVolume(1.0);
+    deathPlayer->setSource(QUrl("qrc:/sonidos/death.mp3"));
 }
 
 // ---------------------------------------------------------
@@ -135,6 +173,11 @@ bool JugadorInfanteria::estaEnAccion() const
 
 void JugadorInfanteria::keyPressEvent(QKeyEvent *event)
 {
+    if (estaMuerto()) {
+        // No responder a teclas si está muerto
+        event->ignore();
+        return;
+    }
     if (event->isAutoRepeat()) return;
 
     switch (event->key()) {
@@ -169,7 +212,27 @@ void JugadorInfanteria::keyPressEvent(QKeyEvent *event)
     }
 
     case Qt::Key_K:
+
+        // --- COOLDOWN DE GRANADA (7 segundos = 7000 ms) ---
+        if (relojGranada.elapsed() < cooldownGranadaMs) {
+            // AÚN NO PUEDE LANZAR OTRA GRANADA
+            return;
+        }
+
+        // Reiniciar cooldown
+        relojGranada.restart();
+
+        // Iniciar animación de lanzar granada
         iniciarAnimacionGranada();
+
+        // Sonido de lanzar granada
+        if (throwPlayer) {
+            if (throwPlayer->playbackState() == QMediaPlayer::PlayingState)
+                throwPlayer->setPosition(0);
+            else
+                throwPlayer->play();
+        }
+
         break;
 
     default:
@@ -179,6 +242,12 @@ void JugadorInfanteria::keyPressEvent(QKeyEvent *event)
 
 void JugadorInfanteria::keyReleaseEvent(QKeyEvent *event)
 {
+    if (estaMuerto()) {
+        // No responder a teclas si está muerto
+        event->ignore();
+        return;
+    }
+
     if (event->isAutoRepeat()) return;
 
     switch (event->key()) {
@@ -218,6 +287,66 @@ void JugadorInfanteria::iniciarAnimacionGranada()
     granadaLanzadaEnEstaAnim = false;
 }
 
+void JugadorInfanteria::recibirDisparo()
+{
+    if (vidas <= 0) return;
+
+    // Sonido de daño
+    if (damagePlayer) {
+        if (damagePlayer->playbackState() == QMediaPlayer::PlayingState)
+            damagePlayer->setPosition(0);
+        else
+            damagePlayer->play();
+    }
+
+    vidas--;
+
+    if (vidas <= 0) {
+
+        // Detener TODOS los sonidos del jugador (caminar, disparo, lanzar, daño)
+        detenerTodosLosSonidos();
+
+        // Animación de muerte
+        iniciarAnimacionMuerte();
+
+        // Sonido de muerte
+        if (deathPlayer)
+            deathPlayer->play();
+    }
+}
+
+void JugadorInfanteria::iniciarAnimacionMuerte()
+{
+    if (muerteProcesada) return;
+    muerteProcesada = true;
+
+    estadoAnim = AnimDead;
+    frameIndex = 0;
+
+    // El jugador ya no puede moverse ni saltar ni disparar
+    moviendoDerecha = false;
+    moviendoIzquierda = false;
+}
+
+void JugadorInfanteria::detenerTodosLosSonidos()
+{
+    // STOP caminar
+    if (walkPlayer && walkPlayer->playbackState() == QMediaPlayer::PlayingState)
+        walkPlayer->stop();
+
+    // STOP disparo
+    if (shotPlayer && shotPlayer->playbackState() == QMediaPlayer::PlayingState)
+        shotPlayer->stop();
+
+    // STOP lanzar granada
+    if (throwPlayer && throwPlayer->playbackState() == QMediaPlayer::PlayingState)
+        throwPlayer->stop();
+
+    // STOP recibir daño
+    if (damagePlayer && damagePlayer->playbackState() == QMediaPlayer::PlayingState)
+        damagePlayer->stop();
+}
+
 // ---------------------------------------------------------
 // Animación
 // ---------------------------------------------------------
@@ -240,7 +369,11 @@ void JugadorInfanteria::actualizarAnimacion()
     case AnimGrenade:
         frames = mirandoDerecha ? &grenadeRight : &grenadeLeft;
         break;
+    case AnimDead:
+        frames = mirandoDerecha ? &deadRight : &deadLeft;
+        break;
     }
+
 
     if (!frames || frames->isEmpty())
         return;
@@ -282,7 +415,7 @@ void JugadorInfanteria::actualizarAnimacion()
         // Cuando terminan los frames de lanzar:
         if (grenadeFramesPlayed >= frames->size()) {
 
-            // Lanzamos la granada SOLO una vez
+            // Lanzamos la granada SOLO una vez por animación
             if (!granadaLanzadaEnEstaAnim) {
                 Soldado::lanzarGranada();
                 granadaLanzadaEnEstaAnim = true;
@@ -295,7 +428,22 @@ void JugadorInfanteria::actualizarAnimacion()
                 estadoAnim = AnimIdle;
 
             frameIndex = 0;
+            grenadeFramesPlayed = 0;
         }
+        break;
+
+
+    case AnimDead:
+        // reproducir la animación UNA sola vez, y quedarse en el último frame
+        if (frameIndex >= frames->size())
+            frameIndex = frames->size() - 1;
+
+        setPixmap(frames->at(frameIndex));
+
+        if (frameIndex < frames->size() - 1)
+            frameIndex++;
+
+        // no cambiamos más de estado: se queda tirado
         break;
     }
     }

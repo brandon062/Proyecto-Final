@@ -32,6 +32,7 @@ EnemigoInfanteria::EnemigoInfanteria(JugadorInfanteria *objetivo, QGraphicsItem 
     walkLeftEnemy.clear();
     shotRightEnemy.clear();
     shotLeftEnemy.clear();
+    setEsJugador(false);
 
     // Tamaño lógico base
     QSize logicalSize(120, 140);
@@ -81,6 +82,22 @@ EnemigoInfanteria::EnemigoInfanteria(JugadorInfanteria *objetivo, QGraphicsItem 
         }
     }
 
+    // DEAD ENEMIGO: dead2_1_enemigo.png .. dead2_4_enemigo.png
+    for (int i = 1; i <= 4; ++i) {
+        QString path = QString(":/images/dead2_%1_enemigo.png").arg(i);
+        QPixmap p(path);
+        if (!p.isNull()) {
+            // Usa el mismo logicalSize que usaste para normalizar otras animaciones
+            QPixmap esc = p.scaled(logicalSize,
+                                   Qt::IgnoreAspectRatio,
+                                   Qt::SmoothTransformation);
+            deadRightEnemy.append(esc);
+            deadLeftEnemy.append(esc.transformed(QTransform().scale(-1, 1)));
+        } else {
+            qDebug() << "NO CARGÓ DeadEnemy:" << path;
+        }
+    }
+
     // Sprite inicial
     if (!idleRightEnemy.isEmpty()) {
         setPixmap(idleRightEnemy[0]);
@@ -92,6 +109,20 @@ EnemigoInfanteria::EnemigoInfanteria(JugadorInfanteria *objetivo, QGraphicsItem 
     estadoAnimEnemigo      = AnimIdleEnemy;
     frameEnemyIndex        = 0;
     shotEnemyFramesPlayed  = 0;
+
+    // ------- SONIDO DE DAÑO ENEMIGO -------
+    damagePlayerEnemy = new QMediaPlayer(this);
+    damageAudioEnemy  = new QAudioOutput(this);
+    damagePlayerEnemy->setAudioOutput(damageAudioEnemy);
+    damageAudioEnemy->setVolume(0.9);
+    damagePlayerEnemy->setSource(QUrl("qrc:/sonidos/damage.mp3"));
+
+    // ------- SONIDO DE MUERTE ENEMIGO -------
+    deathPlayerEnemy = new QMediaPlayer(this);
+    deathAudioEnemy  = new QAudioOutput(this);
+    deathPlayerEnemy->setAudioOutput(deathAudioEnemy);
+    deathAudioEnemy->setVolume(1.0);
+    deathPlayerEnemy->setSource(QUrl("qrc:/sonidos/death_enemy.mp3"));
 
     // Timer de animación (frames)
     connect(timerAnimEnemy, &QTimer::timeout,
@@ -125,8 +156,8 @@ bool EnemigoInfanteria::jugadorVisible() const
 {
     if (!scene() || !jugador) return false;
 
-    // Rango máximo de detección (ligeramente ampliado)
-    const qreal rangoDeteccion = 420.0; // antes ~350, ahora un poco más
+    // Rango máximo de detección
+    const qreal rangoDeteccion = 420.0;
     qreal dist = distanciaAJugador();
     if (dist > rangoDeteccion)
         return false;
@@ -151,6 +182,21 @@ void EnemigoInfanteria::cambiarEstado(EstadoIA nuevo)
 
 void EnemigoInfanteria::actualizarIA()
 {
+    if (enemigoMuerto)
+        return;
+
+    // Si el jugador está muerto, detiene IA por completo
+    if (jugador && jugador->estaMuerto()) {
+
+        // detener movimiento
+        moverDerecha(false);
+        moverIzquierda(false);
+
+        // bloquear animación a Idle
+        estadoAnimEnemigo = AnimIdleEnemy;
+
+        return;
+    }
     switch (estadoActual) {
     case Patrulla:
         comportamientoPatrulla();
@@ -220,6 +266,9 @@ void EnemigoInfanteria::comportamientoAlerta()
         return;
     }
 
+    if (jugador && jugador->estaMuerto())
+        return;
+
     // Quieto
     moverDerecha(false);
     moverIzquierda(false);
@@ -267,6 +316,9 @@ void EnemigoInfanteria::comportamientoPersecucion()
         cambiarEstado(Patrulla);
         return;
     }
+
+    if (jugador && jugador->estaMuerto())
+        return;
 
     qreal dist = distanciaAJugador();
     const qreal distMin   = 120.0;
@@ -395,7 +447,11 @@ void EnemigoInfanteria::actualizarAnimacionEnemigo()
     case AnimShotEnemy:
         frames = mirandoDerecha ? &shotRightEnemy : &shotLeftEnemy;
         break;
+    case AnimDeadEnemy:
+        frames = mirandoDerecha ? &deadRightEnemy : &deadLeftEnemy;
+        break;
     }
+
 
     if (!frames || frames->isEmpty())
         return;
@@ -428,7 +484,56 @@ void EnemigoInfanteria::actualizarAnimacionEnemigo()
             shotEnemyFramesPlayed = 0;
         }
         break;
+    case AnimDeadEnemy:
+        if (frameEnemyIndex >= frames->size())
+            frameEnemyIndex = frames->size() - 1;
+
+        setPixmap(frames->at(frameEnemyIndex));
+
+        if (frameEnemyIndex < frames->size() - 1)
+            frameEnemyIndex++;
+
+        // no se cambia de estado, se queda congelado
+        break;
     }
 }
 
+void EnemigoInfanteria::recibirDisparo()
+{
+    if (enemigoMuerto) return;
+
+    // Sonido de daño
+    if (damagePlayerEnemy) {
+        if (damagePlayerEnemy->playbackState() == QMediaPlayer::PlayingState)
+            damagePlayerEnemy->setPosition(0);
+        else
+            damagePlayerEnemy->play();
+    }
+
+    enemigoMuerto = true;
+
+    // Detener IA y movimiento
+    if (timerIA) timerIA->stop();
+    moverDerecha(false);
+    moverIzquierda(false);
+
+    // Animación de muerte
+    iniciarAnimacionMuerteEnemigo();
+
+    // Sonido de muerte
+    if (deathPlayerEnemy) {
+        deathPlayerEnemy->play();
+    }
+
+    QTimer::singleShot(4000, this, [this]() {
+        if (scene()) scene()->removeItem(this);
+        delete this;
+    });
+}
+
+void EnemigoInfanteria::iniciarAnimacionMuerteEnemigo()
+{
+    estadoAnimEnemigo = AnimDeadEnemy;
+    frameEnemyIndex = 0;
+}
 

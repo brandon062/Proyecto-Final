@@ -6,6 +6,8 @@
 #include <QTimer>
 #include <QVector>
 #include <QPixmap>
+#include <QMediaPlayer>
+#include <QAudioOutput>
 
 class Granada : public QObject, public QGraphicsPixmapItem
 {
@@ -28,6 +30,15 @@ private:
     bool enExplosion;
     int explosionFrameIndex;
     QVector<QPixmap> explosionFrames;
+
+    //  para no aplicar daño varias veces
+    bool danioAplicado = false;
+
+    // helper que aplica daño en radio
+    void aplicarDanioExplosion();
+
+    QMediaPlayer *explosionPlayer = nullptr;
+    QAudioOutput *explosionAudio  = nullptr;
 };
 
 #endif // GRANADA_H

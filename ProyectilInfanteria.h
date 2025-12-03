@@ -9,16 +9,18 @@ class ProyectilInfanteria : public QObject, public QGraphicsPixmapItem
 {
     Q_OBJECT
 public:
-    explicit ProyectilInfanteria(int dir, QGraphicsItem *parent = nullptr);
+    // dir: 1 derecha, -1 izquierda
+    // esDelJugador: true = bala del jugador, false = bala de enemigo
+    explicit ProyectilInfanteria(int dir, bool esDelJugador, QGraphicsItem *parent = nullptr);
 
 private slots:
     void mover();
 
 private:
-    int direccion;   // 1 derecha, -1 izquierda
+    int   direccion;   // 1 derecha, -1 izquierda
     qreal velocidad;
     QTimer *timer;
+    bool esDelJugador;
 };
 
 #endif // PROYECTILINFANTERIA_H
-

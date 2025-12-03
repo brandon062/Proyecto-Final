@@ -19,16 +19,33 @@ Soldado::Soldado(QGraphicsItem *parent)
     connect(timerFisica, &QTimer::timeout,
             this, &Soldado::actualizarFisica);
     timerFisica->start(16);
+
+    // -------- SONIDO DE CAMINAR --------
+    walkPlayer = new QMediaPlayer(this);
+    walkAudio  = new QAudioOutput(this);
+    walkPlayer->setAudioOutput(walkAudio);
+    walkAudio->setVolume(0.6);
+    walkPlayer->setSource(QUrl("qrc:/sonidos/walk.mp3"));
+    walkPlayer->setLoops(QMediaPlayer::Infinite);
+
+    // -------- SONIDO DE DISPARO --------
+    shotPlayer = new QMediaPlayer(this);
+    shotAudio  = new QAudioOutput(this);
+    shotPlayer->setAudioOutput(shotAudio);
+    shotAudio->setVolume(0.8);
+    shotPlayer->setSource(QUrl("qrc:/sonidos/shot.mp3"));
 }
 
 void Soldado::moverDerecha(bool activo)
 {
     moviendoDerecha = activo;
+    actualizarSonidoCaminar();
 }
 
 void Soldado::moverIzquierda(bool activo)
 {
     moviendoIzquierda = activo;
+    actualizarSonidoCaminar();
 }
 
 void Soldado::saltar()
@@ -43,13 +60,34 @@ void Soldado::disparar()
 {
     if (!scene()) return;
 
-    ProyectilInfanteria *bala = new ProyectilInfanteria(dirDisparo);
+    // Crear la bala indicando si es del jugador o del enemigo
+    ProyectilInfanteria *bala = new ProyectilInfanteria(dirDisparo, esJugador);
 
-    qreal px = x() + (dirDisparo > 0 ? boundingRect().width() : 0);
-    qreal py = y() + boundingRect().height() * 0.6;
+    // Calcula desde dónde sale la bala (boca del arma):
+    qreal px;
+    if (dirDisparo > 0) {
+        px = x() + boundingRect().width() * 0.8;  // hacia la derecha
+    } else {
+        px = x() + boundingRect().width() * 0.2;  // hacia la izquierda
+    }
+
+    reproducirSonidoDisparo();
+
+    qreal py = y() + boundingRect().height() * 0.55;  // un poco por debajo del centro
+
     bala->setPos(px, py);
-
     scene()->addItem(bala);
+}
+
+void Soldado::reproducirSonidoDisparo()
+{
+    if (!shotPlayer) return;
+
+    if (shotPlayer->playbackState() == QMediaPlayer::PlayingState) {
+        shotPlayer->setPosition(0);
+    } else {
+        shotPlayer->play();
+    }
 }
 
 void Soldado::lanzarGranada()
@@ -80,7 +118,20 @@ void Soldado::lanzarGranada()
 }
 
 
+void Soldado::actualizarSonidoCaminar()
+{
+    if (!walkPlayer) return;
 
+    if (moviendoDerecha || moviendoIzquierda) {
+        if (walkPlayer->playbackState() != QMediaPlayer::PlayingState) {
+            walkPlayer->play();
+        }
+    } else {
+        if (walkPlayer->playbackState() == QMediaPlayer::PlayingState) {
+            walkPlayer->stop();
+        }
+    }
+}
 
 void Soldado::actualizarFisica()
 {

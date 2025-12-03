@@ -5,6 +5,9 @@
 #include <QGraphicsPixmapItem>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QMediaPlayer>
+#include <QAudioOutput>
+
 
 class Granada;
 class ProyectilInfanteria;
@@ -29,6 +32,9 @@ public:
     // Utilidad
     bool estaEnElSuelo() const { return enSuelo; }
 
+    void setEsJugador(bool value) { esJugador = value; }
+    bool getEsJugador() const { return esJugador; }
+
 protected:
     qreal velocidadX;
     qreal velocidadY; // Altura del suelo
@@ -39,9 +45,21 @@ protected:
     bool moviendoDerecha;
     bool moviendoIzquierda;
 
+    bool esJugador = false;   // por defecto enemigo
+
     int dirDisparo;         // +1 derecha, -1 izquierda
 
     QTimer *timerFisica;
+
+    // Sonidos compartidos (jugador y enemigo)
+    QMediaPlayer *walkPlayer = nullptr;
+    QAudioOutput *walkAudio  = nullptr;
+
+    QMediaPlayer *shotPlayer = nullptr;
+    QAudioOutput *shotAudio  = nullptr;
+
+    void actualizarSonidoCaminar();
+    void reproducirSonidoDisparo();
 
 protected slots:
     void actualizarFisica();
