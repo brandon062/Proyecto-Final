@@ -12,13 +12,19 @@ CONFIG += c++17
 
 SOURCES += \
     CajaReparacion.cpp \
+    EnemigoInfanteria.cpp \
     Entidad.cpp \
     EstructuraMapa.cpp \
+    Granada.cpp \
+    JugadorInfanteria.cpp \
     Mina.cpp \
     NivelBatallaAerea.cpp \
     NivelBatallaTanque.cpp \
+    NivelHaciaBunkerPrueba.cpp \
+    ProyectilInfanteria.cpp \
     ProyectilTanque.cpp \
     Score.cpp \
+    Soldado.cpp \
     Tanque.cpp \
     TanqueEnemigo.cpp \
     Vida.cpp \
@@ -32,14 +38,20 @@ SOURCES += \
 HEADERS += \
     Avion.h \
     CajaReparacion.h \
+    EnemigoInfanteria.h \
     Entidad.h \
     EntidadMovil.h \
     EstructuraMapa.h \
+    Granada.h \
+    JugadorInfanteria.h \
     Mina.h \
     NivelBatallaAerea.h \
     NivelBatallaTanque.h \
+    NivelHaciaBunkerPrueba.h \
+    ProyectilInfanteria.h \
     ProyectilTanque.h \
     Score.h \
+    Soldado.h \
     Tanque.h \
     TanqueEnemigo.h \
     Vehiculo.h \
