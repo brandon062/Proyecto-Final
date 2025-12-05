@@ -53,7 +53,7 @@ NivelHaciaBunkerPrueba::NivelHaciaBunkerPrueba(QWidget *parent)
     musicaFondo->setAudioOutput(audioFondo);
     audioFondo->setVolume(0.7);
 
-    // Primera canción del ciclo
+    // Primera canción
     musicaFondo->setSource(QUrl("qrc:/sonidos/fondo3.mp3"));
     musicaFondo->play();
 
@@ -179,7 +179,7 @@ void NivelHaciaBunkerPrueba::inicializarHUDVidas()
     }
     corazonesHUD.clear();
 
-    // Cargar corazón y escalarlo para que se vea pequeño
+    // Cargar corazon y escalarlo
     QPixmap corazonOriginal(":/images/corazon.png");
     if (corazonOriginal.isNull()) {
         qDebug() << "No se pudo cargar :/images/corazon.png";
@@ -348,6 +348,10 @@ void NivelHaciaBunkerPrueba::mostrarVictoria()
 
     textoVictoria->setPos(sceneCenter.x() - br.width()  / 2.0,
                           sceneCenter.y() - br.height() / 2.0);
+
+    QTimer::singleShot(6000, this, [this]() {
+        emit nivelCompletado(true);   // avisa al MainWindow DESPUÉS de los 6 s
+    });
 }
 
 
@@ -434,9 +438,6 @@ void NivelHaciaBunkerPrueba::reiniciarNivel()
 
     // Limpiar todos los items de la escena
     scene->clear();
-
-    // Volver a montar el nivel EXACTAMENTE igual que en el constructor
-    // (mismo código, pero sin recrear "scene" ni la configuración del view)
 
     // Fondo de nuevo
     scene->setBackgroundBrush(QBrush(QImage(":/images/bg3.png")));

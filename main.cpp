@@ -1,24 +1,17 @@
 #include <QApplication>
-#include "NivelBatallaAerea.h"
-#include "NivelBatallaTanque.h"
-#include "NivelHaciaBunkerPrueba.h"
+#include "mainwindow.h"
 
-juego *Juego = nullptr;
-
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
     QApplication a(argc, argv);
 
-    // === PARA PROBAR NIVEL 2 (TANQUE) ===
-    //NivelBatallaTanque *nivel2 = new NivelBatallaTanque();
-    //nivel2->show();
-
-     //probar el nivel 1:
-    //Juego = new juego();
-    //Juego->show();
-
-    NivelHaciaBunkerPrueba prueba;
-    prueba.show();
+    MainWindow w;
+    w.show();
 
     return a.exec();
 }
+
+
+
+
 

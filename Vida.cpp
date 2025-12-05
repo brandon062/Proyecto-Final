@@ -3,8 +3,7 @@
 #include <QFont>
 #include "NivelBatallaAerea.h"
 
-extern juego *Juego;
-
+extern NivelBatallaAerea *Juego;
 Vida::Vida(QGraphicsItem *parent): QGraphicsTextItem(parent){
     vida = 3;
 

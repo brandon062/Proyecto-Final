@@ -8,7 +8,7 @@
 #include "proyectilEnemigo.h"
 #include "jugador.h"
 #include "explosion.h"
-extern juego *Juego;
+extern NivelBatallaAerea *Juego;
 
 enemigo::enemigo(QGraphicsItem * parent): Avion(parent){
     // posición aleatoria en X

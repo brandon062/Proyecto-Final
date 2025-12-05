@@ -14,6 +14,8 @@
 #include "Vida.h"
 
 class NivelBatallaAerea: public QGraphicsView{
+
+    Q_OBJECT
 public:
     NivelBatallaAerea(QWidget * parent = 0);
 
@@ -37,9 +39,11 @@ public:
 
     QMediaPlayer *bgMusic;
     QAudioOutput *bgAudio;
+
+signals:
+    void nivelCompletado(bool ganado);  // true = victoria, false = derrota
 };
 
-using juego = NivelBatallaAerea;
 
 #endif // NIVELBATALLAAEREA_H
 

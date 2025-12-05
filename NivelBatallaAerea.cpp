@@ -10,6 +10,8 @@
 #include <QKeyEvent>
 #include <QUrl>
 
+NivelBatallaAerea *Juego = nullptr;
+
 NivelBatallaAerea::NivelBatallaAerea(QWidget *parent){
     // create the scene
     scene = new QGraphicsScene();
@@ -36,7 +38,7 @@ NivelBatallaAerea::NivelBatallaAerea(QWidget *parent){
 
     // Inicializar el nivel (jugador, score, vida, timers, etc.)
     resetLevel();
-
+    Juego = this;
     show();
 }
 
@@ -157,6 +159,10 @@ void NivelBatallaAerea::winLevel(){
     msg->setFont(QFont("times", 16));
     msg->setPos(60, 260);
     scene->addItem(msg);
+
+    QTimer::singleShot(6000, this, [this]() {
+        emit nivelCompletado(true);   // Se avisa a MainWindow DESPUÉS de los 6 s
+    });
 }
 
 void NivelBatallaAerea::gameOver(){

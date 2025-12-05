@@ -14,7 +14,7 @@ static const int EXPLOSION_W = 160;   // ancho de cada frame de explosión
 static const int EXPLOSION_H = 160;   // alto de cada frame de explosión
 
 //  RADIO DE DAÑO (EN PIXELES):
-static const qreal RADIO_EXPLOSION = 110;
+static const qreal RADIO_EXPLOSION = 130;
 
 Granada::Granada(int dir, qreal gY, QGraphicsItem *parent)
     : QObject()
@@ -39,7 +39,7 @@ Granada::Granada(int dir, qreal gY, QGraphicsItem *parent)
             qDebug() << "NO CARGÓ explosion frame:" << path;
     }
 
-    // Usaremos el primer frame como sprite de granada en el aire
+    // Se usa el primer frame como sprite de granada en el aire
     if (!explosionFrames.isEmpty()) {
         QPixmap esc = explosionFrames[0].scaled(
             GRANADA_W, GRANADA_,
@@ -55,7 +55,7 @@ Granada::Granada(int dir, qreal gY, QGraphicsItem *parent)
     explosionAudio  = new QAudioOutput(this);
     explosionPlayer->setAudioOutput(explosionAudio);
     explosionAudio->setVolume(1.0);
-    explosionPlayer->setSource(QUrl("qrc:/sonidos/explosion_grenade.mp3"));// SONIDO DE EXPLOSIÓN DE GRANADA
+    explosionPlayer->setSource(QUrl("qrc:/sonidos/explosion_grenade.mp3"));
     explosionPlayer = new QMediaPlayer(this);
     explosionAudio  = new QAudioOutput(this);
     explosionPlayer->setAudioOutput(explosionAudio);
@@ -93,7 +93,7 @@ void Granada::actualizar()
     }
 
     // ============================
-    //  FASE EN EL AIRE (PARÁBOLA)
+    //  FASE EN EL AIRE (PARABOLA)
     // ============================
 
     velY += gravedad;

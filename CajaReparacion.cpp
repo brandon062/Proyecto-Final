@@ -10,5 +10,5 @@ CajaReparacion::CajaReparacion(QGraphicsItem *parent)
                                 Qt::SmoothTransformation);
     setPixmap(esc);
 
-    // No marcamos flags de colisión sólida (no la tratamos como obstáculo)
+    // No marcamos flags de colisión sólida (no se trata como obstaculo)
 }

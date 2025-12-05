@@ -15,9 +15,8 @@
 Tanque::Tanque(QGraphicsItem *parent)
     : QObject()
     , QGraphicsPixmapItem(parent)
-    , anguloCuerpo(0.0)   // 0 grados = tanque mirando hacia arriba
+    , anguloCuerpo(0.0)   // 0 grados = mirando hacia arriba
     , velocidad(0.0)
-    // movimiento LENTO
     , aceleracion(0.15)
     , friccion(0.92)
     , velocidadMaxima(1.5)
@@ -66,7 +65,7 @@ Tanque::Tanque(QGraphicsItem *parent)
     torreta->setPos(0, 0);
     torreta->setRotation(anguloTorretaRel);
 
-    // ===== Sonido continuo del motor (tank_engine.mp3) =====
+    // ===== Sonido continuo del motor =====
     motorLoopPlayer = new QMediaPlayer(this);
     motorLoopAudio  = new QAudioOutput(this);
     motorLoopPlayer->setAudioOutput(motorLoopAudio);
@@ -83,7 +82,7 @@ Tanque::Tanque(QGraphicsItem *parent)
     drivingPlayer->setSource(QUrl("qrc:/sonidos/tank_driving.mp3"));
     drivingPlayer->setLoops(QMediaPlayer::Infinite);
 
-    // ===== Sonido de torreta (tank_turret.mp3) =====
+    // ===== Sonido de torreta =====
     turretPlayer = new QMediaPlayer(this);
     turretAudio  = new QAudioOutput(this);
     turretPlayer->setAudioOutput(turretAudio);
@@ -91,7 +90,7 @@ Tanque::Tanque(QGraphicsItem *parent)
     turretPlayer->setSource(QUrl("qrc:/sonidos/tank_turret.mp3"));
     turretPlayer->setLoops(QMediaPlayer::Infinite);
 
-    // ===== Sonido de disparo (tank_fire.mp3) =====
+    // ===== Sonido de disparo =====
     firePlayer = new QMediaPlayer(this);
     fireAudio  = new QAudioOutput(this);
     firePlayer->setAudioOutput(fireAudio);
@@ -174,7 +173,7 @@ void Tanque::keyReleaseEvent(QKeyEvent *event)
         break;
     case Qt::Key_Left:
         girarTorretaIzq = false;
-        if (!girarTorretaDer) {              // si no sigues girando a la derecha
+        if (!girarTorretaDer) {              // si no se sigue girando a la derecha
             turretPlayer->stop();
             turretPlayer->setPosition(0);    // para que empiece desde el inicio la próxima vez
         }
@@ -253,7 +252,7 @@ void Tanque::actualizarFisica()
     }
 
     // === Colisión con minas (solo afecta al jugador) ===
-    colisiones = collidingItems();  // recalculamos después de ajustar posición
+    colisiones = collidingItems();  // se recalcula después de ajustar posición
     for (QGraphicsItem *item : colisiones) {
         Mina *mina = dynamic_cast<Mina*>(item);
         if (mina) {
@@ -373,7 +372,7 @@ void Tanque::setVidas(int v)
 
     vidas = v;
 
-    // Aquí no emitimos vidasCambiaron ni hacemos lógica de muerte,
+    // Aquí no se emite vidasCambiaron ni hacemos lógica de muerte,
     // eso se maneja con recibirImpacto() y en el nivel.
 }
 

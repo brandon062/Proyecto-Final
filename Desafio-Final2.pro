@@ -33,6 +33,7 @@ SOURCES += \
     explosion.cpp \
     jugador.cpp \
     main.cpp \
+    mainwindow.cpp \
     proyectil.cpp \
     proyectilEnemigo.cpp
 
@@ -61,10 +62,12 @@ HEADERS += \
     enemigo.h \
     explosion.h \
     jugador.h \
+    mainwindow.h \
     proyectil.h \
     proyectilEnemigo.h
 
-FORMS +=
+FORMS += \
+    mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

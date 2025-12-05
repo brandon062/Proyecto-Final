@@ -17,6 +17,9 @@ class NivelHaciaBunkerPrueba : public QGraphicsView
     Q_OBJECT
 public:
     explicit NivelHaciaBunkerPrueba(QWidget *parent = nullptr);
+
+signals:
+    void nivelCompletado(bool ganado);  // true = victoria, false = derrota
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 

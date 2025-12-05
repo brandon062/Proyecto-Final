@@ -7,7 +7,7 @@
 #include "NivelBatallaAerea.h"
 #include "explosion.h"
 
-extern juego *Juego;
+extern NivelBatallaAerea *Juego;
 
 proyectil::proyectil(QGraphicsItem *parent): EntidadMovil(parent){
     // Cargar el sprite original del proyectil

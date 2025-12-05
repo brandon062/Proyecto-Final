@@ -17,6 +17,7 @@ EnemigoInfanteria::EnemigoInfanteria(JugadorInfanteria *objetivo,
 {
     // Tamaño del sprite del enemigo
     QSize size(120, 140);
+    velocidadX = 3.0;
 
     // --------- CARGA DE SPRITES DE IDLE ----------
     // idle_1_enemigo.png ... idle_9_enemigo.png
@@ -67,7 +68,7 @@ EnemigoInfanteria::EnemigoInfanteria(JugadorInfanteria *objetivo,
     damagePlayer->setAudioOutput(damageAudio);
     damagePlayer->setSource(QUrl("qrc:/sonidos/damage.mp3"));
 
-    // Sonido cuando el enemigo muere
+    // Sonido de muerte
     deathPlayer = new QMediaPlayer;
     deathAudio  = new QAudioOutput;
     deathPlayer->setAudioOutput(deathAudio);

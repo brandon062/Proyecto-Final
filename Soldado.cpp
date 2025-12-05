@@ -6,7 +6,7 @@
 Soldado::Soldado(QGraphicsItem *parent)
     : QObject()
     , QGraphicsPixmapItem(parent)
-    , velocidadX(0.0)
+    , velocidadX(4.0)
     , velocidadY(0.0)
     , gravedad(0.8)
     , groundY(400.0)
@@ -136,20 +136,31 @@ void Soldado::actualizarSonidoCaminar()
 void Soldado::actualizarFisica()
 {
     qreal vx = 0.0;
-    if (moviendoDerecha) vx += 4.0;
-    if (moviendoIzquierda) vx -= 4.0;
+    if (moviendoDerecha)  vx += velocidadX;   // usar velocidadX
+    if (moviendoIzquierda) vx -= velocidadX;
 
     velocidadY += gravedad;
 
     qreal nuevoX = x() + vx;
     qreal nuevoY = y() + velocidadY;
 
+    // Colisión con el suelo
     if (nuevoY + boundingRect().height() >= groundY) {
         nuevoY = groundY - boundingRect().height();
         velocidadY = 0.0;
         enSuelo = true;
     } else {
         enSuelo = false;
+    }
+
+    // limitar en los laterales de la escena
+    if (scene()) {
+        QRectF r = scene()->sceneRect();  // usa el rectángulo de la escena actual
+        qreal minX = r.left();
+        qreal maxX = r.right() - boundingRect().width();
+
+        if (nuevoX < minX) nuevoX = minX;
+        if (nuevoX > maxX) nuevoX = maxX;
     }
 
     setPos(nuevoX, nuevoY);

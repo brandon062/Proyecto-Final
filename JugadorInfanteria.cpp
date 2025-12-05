@@ -243,7 +243,7 @@ void JugadorInfanteria::keyPressEvent(QKeyEvent *event)
 void JugadorInfanteria::keyReleaseEvent(QKeyEvent *event)
 {
     if (estaMuerto()) {
-        // No responder a teclas si está muerto
+        // No responder a teclas si esta muerto
         event->ignore();
         return;
     }
@@ -421,7 +421,7 @@ void JugadorInfanteria::actualizarAnimacion()
                 granadaLanzadaEnEstaAnim = true;
             }
 
-            // Volvemos a Idle o Walk según si se está moviendo
+            // Volvemos a Idle o Walk según si se esta moviendo
             if (moviendoDerecha || moviendoIzquierda)
                 estadoAnim = AnimWalk;
             else
@@ -434,7 +434,7 @@ void JugadorInfanteria::actualizarAnimacion()
 
 
     case AnimDead:
-        // reproducir la animación UNA sola vez, y quedarse en el último frame
+        // reproducir la animación UNA sola vez, y quedarse en el ultimo frame
         if (frameIndex >= frames->size())
             frameIndex = frames->size() - 1;
 
@@ -443,7 +443,7 @@ void JugadorInfanteria::actualizarAnimacion()
         if (frameIndex < frames->size() - 1)
             frameIndex++;
 
-        // no cambiamos más de estado: se queda tirado
+        // no se cambia mas de estado: se queda tirado
         break;
     }
     }

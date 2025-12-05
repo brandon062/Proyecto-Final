@@ -491,6 +491,10 @@ void NivelBatallaTanque::mostrarMisionCompletada()
     } else {
         missionPlayer->play();
     }
+
+    QTimer::singleShot(6000, this, [this]() {
+        emit nivelCompletado(true);   // avisa al MainWindow DESPUÉS de los 6 s
+    });
 }
 
 

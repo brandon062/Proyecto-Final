@@ -5,7 +5,7 @@
 #include "jugador.h"
 #include "NivelBatallaAerea.h"
 #include "explosion.h"
-extern juego *Juego;
+extern NivelBatallaAerea *Juego;
 
 proyectilEnemigo::proyectilEnemigo(QGraphicsItem *parent)
     : QObject(), QGraphicsPixmapItem(parent)

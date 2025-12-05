@@ -58,7 +58,7 @@ EnemigoFinalInfanteria::EnemigoFinalInfanteria(JugadorInfanteria *objetivo,
         }
     }
 
-    // Frame inicial del jefe
+    // Frame inicial
     if (!idleRight.isEmpty())
         setPixmap(idleRight[0]);
 }
@@ -78,7 +78,7 @@ void EnemigoFinalInfanteria::recibirDisparo()
 
     vidaRestante--;
 
-    // Mientras tenga vida, no muere aún
+    // Mientras tenga vida, no muere aun
     if (vidaRestante > 0)
         return;
 

@@ -23,6 +23,7 @@
         <file>walk.mp3</file>
         <file>fondo3.mp3</file>
         <file>fondo4.mp3</file>
+        <file>menu.mp3</file>
     </qresource>
     <qresource prefix="/images">
         <file>avion_jugador.png</file>
@@ -142,5 +143,6 @@
         <file>walk_7_final.png</file>
         <file>walk_8_final.png</file>
         <file>dead_5_final.png</file>
+        <file>menu.png</file>
     </qresource>
 </RCC>
